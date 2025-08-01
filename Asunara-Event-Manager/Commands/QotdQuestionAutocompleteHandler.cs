@@ -21,7 +21,7 @@ public class QotdQuestionAutocompleteHandler : AutocompleteHandler
         List<AutocompleteResult> autocompleteResults = new List<AutocompleteResult>();
         foreach (QotdQuestion qotdQuestion in qotdQuestions.Where(x => x.Question.Contains(autocompleteInteraction.Data.Current.Value as string ?? string.Empty, StringComparison.InvariantCultureIgnoreCase)))
         {
-            autocompleteResults.Add(new AutocompleteResult(qotdQuestion.Question, qotdQuestion.Id.ToString()));
+            autocompleteResults.Add(new AutocompleteResult(qotdQuestion.Question.WithMaxLength(100), qotdQuestion.Id.ToString()));
         }
         
         return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
