@@ -45,9 +45,7 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AdditionalFiles>
       <None Remove="appsettings.dev.json" />
-      <AdditionalFiles Include="appsettings.dev.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </AdditionalFiles>
+      <AdditionalFiles Include="appsettings.dev.json" />
     </ItemGroup>
 
 </Project>
