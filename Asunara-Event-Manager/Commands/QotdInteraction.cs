@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace EventManager.Commands;
 
 [Group("qotd", "Commands für die Question of the Day")]
+[RequireRole(Konst.RoleTeamTeamDiscordId)]
 public class QotdInteraction : InteractionModuleBase
 {
     private readonly ISender _sender;
