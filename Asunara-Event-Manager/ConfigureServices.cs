@@ -110,7 +110,7 @@ public static class ConfigureServices
             options.ScheduleJob<QotdCheckQuestionsJob>(trigger =>
             {
                 trigger
-                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-5).Hour, rootConfig.Discord.Qotd.Time.Minute)
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-12).Hour, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
             
