@@ -106,9 +106,18 @@ public static class ConfigureServices
                     .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.Hour, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
+            
+            options.ScheduleJob<QotdCheckQuestionsJob>(trigger =>
+            {
+                trigger
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-5).Hour, rootConfig.Discord.Qotd.Time.Minute)
+                        .WithMisfireHandlingInstructionFireAndProceed());
+            });
+            
 
         });
 
         services.AddTransient<QotdPostJob>();
+        services.AddTransient<QotdCheckQuestionsJob>();
     }
 }
