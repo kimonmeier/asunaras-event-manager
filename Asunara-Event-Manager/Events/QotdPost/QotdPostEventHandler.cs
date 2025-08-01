@@ -69,6 +69,11 @@ public class QotdPostEventHandler : IRequestHandler<QotdPostEvent>
             return unusedQuestion;
         }
 
+        if (!_config.Discord.Qotd.AllowReposts)
+        {
+            throw new Exception("Qotd message doesn't allow reposts and no new Questions are available");
+        }
+
         QotdQuestion? leastQuestions = await _questionRepository.GetLeastQuestions();
 
         if (leastQuestions is not null)
