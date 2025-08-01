@@ -105,7 +105,7 @@ public class DiscordService
 #if DEBUG
         await interactionService.RegisterCommandsToGuildAsync(679367558809255938, true);
 #else
-        await interactionService.RegisterCommandsGloballyAsync(true);
+        await interactionService.RegisterCommandsToGuildAsync(_config.Discord.TeamDiscordServerId, true);
 #endif
         
         _client.InteractionCreated += async interaction =>
