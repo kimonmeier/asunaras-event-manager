@@ -103,10 +103,12 @@ public static class ConfigureServices
             options.ScheduleJob<QotdPostJob>(trigger =>
             {
                 trigger
-                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.Hour, rootConfig.Discord.Qotd.Time.Minute).WithMisfireHandlingInstructionFireAndProceed())
-                    .WithSimpleSchedule(x => x.RepeatForever().WithMisfireHandlingInstructionNowWithExistingCount());
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.Hour, rootConfig.Discord.Qotd.Time.Minute)
+                        .WithMisfireHandlingInstructionFireAndProceed());
             });
 
         });
+
+        services.AddTransient<QotdPostJob>();
     }
 }

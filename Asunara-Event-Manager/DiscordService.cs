@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Quartz;
 
 namespace EventManager;
 
@@ -19,14 +20,16 @@ public class DiscordService
     private readonly DiscordSocketClient _client;
     private readonly ISender _sender;
     private readonly IServiceProvider _services;
+    private readonly ISchedulerFactory _schedulerFactory;
     
-    public DiscordService(ILogger<DiscordService> logger, RootConfig config, DiscordSocketClient client, ISender sender, IServiceProvider services)
+    public DiscordService(ILogger<DiscordService> logger, RootConfig config, DiscordSocketClient client, ISender sender, IServiceProvider services, ISchedulerFactory schedulerFactory)
     {
         _logger = logger;
         _config = config;
         _client = client;
         _sender = sender;
         _services = services;
+        _schedulerFactory = schedulerFactory;
     }
 
     public async Task RunAsync(IHost host)
@@ -45,9 +48,12 @@ public class DiscordService
         
         await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
         await _client.StartAsync();
-        
+        IScheduler scheduler = await _schedulerFactory.GetScheduler();
+        await scheduler.StartDelayed(TimeSpan.FromSeconds(5));
+
         await host.WaitForShutdownAsync();
 
+        await scheduler.Shutdown();
         await _client.LogoutAsync();
         await _client.StopAsync();
     }
