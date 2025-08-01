@@ -34,6 +34,7 @@ public class QotdCreatedEventHandler : IRequestHandler<QotdCreatedEvent>
         await _repository.AddAsync(new QotdQuestion()
         {
             Question = request.Question,
+            AuthorId = request.AuthorId,
         });
         
         await transaction.Commit(cancellationToken);

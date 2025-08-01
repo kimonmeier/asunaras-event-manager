@@ -28,7 +28,8 @@ public class QotdInteraction : InteractionModuleBase
 
         await _sender.Send(new QotdCreatedEvent()
         {
-            Question = question
+            Question = question,
+            AuthorId = Context.User.Id,
         });
         
         await ModifyOriginalResponseAsync(x =>
