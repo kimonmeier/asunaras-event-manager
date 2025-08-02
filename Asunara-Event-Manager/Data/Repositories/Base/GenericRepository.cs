@@ -1,4 +1,4 @@
-﻿using EventManager.Data.Entities.Base;
+﻿using EventManager.Data.Entities.Events.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.Repositories.Base;

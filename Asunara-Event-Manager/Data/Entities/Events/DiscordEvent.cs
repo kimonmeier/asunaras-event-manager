@@ -1,6 +1,6 @@
-﻿using EventManager.Data.Entities.Base;
+﻿using EventManager.Data.Entities.Events.Base;
 
-namespace EventManager.Data.Entities;
+namespace EventManager.Data.Entities.Events;
 
 public class DiscordEvent : IEntity
 {

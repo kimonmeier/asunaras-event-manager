@@ -1,4 +1,4 @@
-﻿using EventManager.Data.Entities.QOTD;
+﻿using EventManager.Data.Entities.Events.QOTD;
 using EventManager.Data.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
 

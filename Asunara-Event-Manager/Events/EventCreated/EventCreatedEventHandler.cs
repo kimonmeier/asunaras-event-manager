@@ -1,5 +1,5 @@
 ﻿using EventManager.Data;
-using EventManager.Data.Entities;
+using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

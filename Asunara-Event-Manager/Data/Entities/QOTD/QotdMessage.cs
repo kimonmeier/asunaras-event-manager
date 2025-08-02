@@ -1,6 +1,6 @@
-﻿using EventManager.Data.Entities.Base;
+﻿using EventManager.Data.Entities.Events.Base;
 
-namespace EventManager.Data.Entities.QOTD;
+namespace EventManager.Data.Entities.Events.QOTD;
 
 public class QotdMessage : IEntity
 {
