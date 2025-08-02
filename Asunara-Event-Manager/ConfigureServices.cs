@@ -103,14 +103,14 @@ public static class ConfigureServices
             options.ScheduleJob<QotdPostJob>(trigger =>
             {
                 trigger
-                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.Hour, rootConfig.Discord.Qotd.Time.Minute)
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.ToTimeSpan().Hours, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
             
             options.ScheduleJob<QotdCheckQuestionsJob>(trigger =>
             {
                 trigger
-                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-12).Hour, rootConfig.Discord.Qotd.Time.Minute)
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-12).ToTimeSpan().Hours, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
             
