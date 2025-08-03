@@ -24,7 +24,7 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
         var guild = request.Channel.Guild;
         var events = await _discordEventRepository.GetAllUncompleted();
 
-        DiscordEvent? @event = events.SingleOrDefault(x => guild.GetEvent(x.DiscordId).Status == GuildScheduledEventStatus.Active);
+        DiscordEvent? @event = events.SingleOrDefault(x => guild.GetEvent(x.DiscordId)?.Status == GuildScheduledEventStatus.Active);
 
         if (@event is null)
         {

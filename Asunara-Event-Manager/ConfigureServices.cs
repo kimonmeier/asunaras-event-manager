@@ -55,7 +55,7 @@ public static class ConfigureServices
         {
             options.UseMemoryCacheProvider();
             options.UseCacheKeyPrefix("EF_");
-            options.CacheAllQueries(CacheExpirationMode.Absolute, TimeSpan.FromHours(1));
+            options.CacheAllQueries(CacheExpirationMode.Sliding, TimeSpan.FromMinutes(30));
             options.ConfigureLogging(true);
         });
         services.AddDbContext<ApplicationDbContext>((servicesProvider, config) =>
