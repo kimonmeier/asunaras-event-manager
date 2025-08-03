@@ -1,0 +1,54 @@
+﻿using Discord.WebSocket;
+using EventManager.Configuration;
+using EventManager.Data.Entities.Restrictions;
+using EventManager.Models.Restrictions;
+using MediatR;
+
+namespace EventManager.Events.CheckFskRestrictionOnUser;
+
+public class CheckFskRestrictionOnUserEventHandler : IRequestHandler<CheckFskRestrictionOnUserEvent, RestrictionCheckResult>
+{
+    private readonly DiscordSocketClient _client;
+    private readonly RootConfig _config;
+
+    public CheckFskRestrictionOnUserEventHandler(DiscordSocketClient client, RootConfig config)
+    {
+        _client = client;
+        _config = config;
+    }
+
+    public async Task<RestrictionCheckResult> Handle(CheckFskRestrictionOnUserEvent request, CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask;
+        
+        if (request.Event.Restrictions.SingleOrDefault(x => x is FskRestrictions) is not FskRestrictions fskRestriction)
+        {
+            return new RestrictionCheckResult(true);
+        }
+
+        var roles = request.User.Roles.ToList();
+        FskRange? range = _config.Discord.Fsk.Range.SingleOrDefault(x => roles.Any(z => z.Id == x.RoleId));
+        if (range is null)
+        {
+            return new RestrictionCheckResult(false, "Du hast leider kein Alter angegeben!");
+        }
+
+        if (fskRestriction.MaxAlter is not null)
+        {
+            if (fskRestriction.MaxAlter <= (range.MaxAge ?? range.MinAge))
+            {
+                return new RestrictionCheckResult(false, $"Du bist leider zu Alt für das Event! Das Maximalalter für das Event beträgt {fskRestriction.MaxAlter} Jahre");
+            }
+        }
+
+        if (fskRestriction.MinAlter is not null)
+        {
+            if (fskRestriction.MinAlter >= (range.MinAge ?? range.MaxAge))
+            {
+                return new RestrictionCheckResult(false, $"Du bist leider zu Jung für das Event! Das Mindestalter für das Event beträgt {fskRestriction.MinAlter} Jahre");
+            }
+        }
+        
+        return new RestrictionCheckResult(true);
+    }
+}

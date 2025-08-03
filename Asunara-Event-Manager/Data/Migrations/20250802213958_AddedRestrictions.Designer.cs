@@ -3,6 +3,7 @@ using System;
 using EventManager.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManager.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250802213958_AddedRestrictions")]
+    partial class AddedRestrictions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
@@ -29,9 +32,6 @@ namespace EventManager.Data.Migrations
                     b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -39,8 +39,6 @@ namespace EventManager.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DiscordId");
-
-                    b.HasIndex("IsCompleted");
 
                     b.ToTable("DiscordEvent", (string)null);
                 });

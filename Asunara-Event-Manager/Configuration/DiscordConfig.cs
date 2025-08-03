@@ -16,6 +16,8 @@ public class DiscordConfig
     public ulong EventChatId { get; set; }
     
     public QotdConfig Qotd { get; set; } = new QotdConfig();
+    
+    public FskConfig Fsk { get; set; } = new FskConfig();
 }
 
 public class QotdConfig
@@ -30,4 +32,18 @@ public class QotdConfig
     public string Text { get; set; }
     
     public string ThreadTitle { get; set; }
+}
+
+public class FskConfig
+{
+    public List<FskRange> Range { get; set; } = new List<FskRange>();
+}
+
+public class FskRange
+{
+    public ulong RoleId { get; set; }
+    
+    public int? MinAge { get; set; }
+    
+    public int? MaxAge { get; set; }
 }

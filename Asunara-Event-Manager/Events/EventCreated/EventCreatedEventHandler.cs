@@ -23,7 +23,7 @@ public class EventCreatedEventHandler : IRequestHandler<EventCreatedEvent>
 
         await _discordEventRepository.AddAsync(new DiscordEvent()
         {
-            DiscordId = request.DiscordId, Date = request.Datum
+            DiscordId = request.DiscordId, Date = request.Datum, Name = request.EventName
         });
 
         await transaction.Commit(cancellationToken);

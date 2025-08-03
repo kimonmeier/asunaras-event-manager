@@ -1,10 +1,14 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using EFCoreSecondLevelCacheInterceptor;
 using EventManager.Background;
+using EventManager.Behaviour;
 using EventManager.Commands;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,14 +51,17 @@ public static class ConfigureServices
 
     private static void AddDatabase(this IServiceCollection services, RootConfig configuration)
     {
-        services.AddDbContext<ApplicationDbContext>(config =>
-        {
-            config.UseSqlite(configuration.Database.ConnectionString, op => op.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-        });
         services.AddEFSecondLevelCache(options =>
         {
-            options.Settings.EnableLogging = true;
             options.UseMemoryCacheProvider();
+            options.UseCacheKeyPrefix("EF_");
+            options.CacheAllQueries(CacheExpirationMode.Absolute, TimeSpan.FromHours(1));
+            options.ConfigureLogging(true);
+        });
+        services.AddDbContext<ApplicationDbContext>((servicesProvider, config) =>
+        {
+            config.UseSqlite(configuration.Database.ConnectionString, op => op.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery));
+            config.AddInterceptors(servicesProvider.GetRequiredService<SecondLevelCacheInterceptor>());
         });
 
         services.AddScoped<DbTransactionFactory>();
@@ -68,6 +75,12 @@ public static class ConfigureServices
 
     private static void AddServices(this IServiceCollection services)
     {
+        services.AddSingleton(new DiscordSocketConfig()
+        {
+            AlwaysDownloadUsers = true,
+            AlwaysDownloadDefaultStickers = true,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
+        });
         services.AddSingleton<DiscordService>();
     }
 
@@ -77,6 +90,9 @@ public static class ConfigureServices
         {
             x.RegisterServicesFromAssembly(typeof(Program).Assembly);
         });
+        services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+        
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     }
 
     private static void AddRepositories(this IServiceCollection services)
@@ -84,6 +100,7 @@ public static class ConfigureServices
         services.AddTransient<DiscordEventRepository>();
         services.AddTransient<QotdMessageRepository>();
         services.AddTransient<QotdQuestionRepository>();
+        services.AddTransient<EventRestrictionRepository>();
     }
 
     private static void AddInteractions(this IServiceCollection services)

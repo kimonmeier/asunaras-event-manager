@@ -20,5 +20,8 @@ public class DiscordEventConfiguration : IEntityTypeConfiguration<DiscordEvent>
 
         builder
             .HasIndex(x => x.DiscordId);
+
+        builder
+            .HasIndex(x => x.IsCompleted);
     }
 }

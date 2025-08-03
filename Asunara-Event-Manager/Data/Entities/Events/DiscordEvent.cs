@@ -8,5 +8,11 @@ public class DiscordEvent : IEntity
     
     public ulong DiscordId { get; set; }
     
+    public string Name { get; set; }
+    
     public DateTime Date { get; set; }
+    
+    public bool IsCompleted { get; set; }
+    
+    public List<EventRestriction> Restrictions { get; set; } = new List<EventRestriction>();
 }
