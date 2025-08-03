@@ -24,8 +24,6 @@ public class QotdInteraction : InteractionModuleBase
     [SlashCommand("add", "Adds a new question")]
     public async Task AddQuestion(string question)
     {
-        await DeferAsync();
-
         await _sender.Send(new QotdCreatedEvent()
         {
             Question = question,
@@ -41,8 +39,6 @@ public class QotdInteraction : InteractionModuleBase
     [SlashCommand("remove", "Removes a question")]
     public async Task RemoveQuestion([Autocomplete(typeof(QotdQuestionAutocompleteHandler))] string questionId)
     {
-        await DeferAsync();
-        
         await _sender.Send(new QotdDeletedEvent()
         {
             QuestionId = Guid.Parse(questionId)
@@ -57,8 +53,6 @@ public class QotdInteraction : InteractionModuleBase
     [SlashCommand("post", "Posts a QOTD")]
     public async Task PostQuestion()
     {
-        await DeferAsync();
-
         await _sender.Send(new QotdPostEvent());
 
         await ModifyOriginalResponseAsync(x =>

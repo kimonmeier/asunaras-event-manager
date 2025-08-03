@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quartz;
+using IResult = Discord.Interactions.IResult;
+using RunMode = Discord.Interactions.RunMode;
 
 namespace EventManager;
 
@@ -107,6 +109,55 @@ public class DiscordService
 #else
         await interactionService.RegisterCommandsToGuildAsync(_config.Discord.TeamDiscordServerId, true);
 #endif
+
+        interactionService.SlashCommandExecuted += async (SlashCommandInfo commandInfo, Discord.IInteractionContext context, IResult result) =>
+        {
+            if (result.IsSuccess)
+            {
+                return;
+            }
+
+            string message;
+            switch (result.Error)
+            {
+                case InteractionCommandError.UnmetPrecondition:
+                    message = $"Unmet Precondition: {result.ErrorReason}";
+
+                    break;
+                case InteractionCommandError.UnknownCommand:
+                    message = "Unknown command";
+
+                    break;
+                case InteractionCommandError.BadArgs:
+                    message = "Invalid number or arguments";
+
+                    break;
+                case InteractionCommandError.Exception:
+                    message = $"Command exception: {result.ErrorReason}";
+
+                    break;
+                case InteractionCommandError.Unsuccessful:
+                    message = "Command could not be executed";
+
+                    break;
+                default:
+                    return;
+            }
+
+            EmbedBuilder embedBuilder = new();
+            embedBuilder.Color = Color.Red;
+            embedBuilder.Title = "Error occured during Command";
+            embedBuilder.Description = "While executing a command an unexpected issue occured.";
+            embedBuilder.AddField("Error-Message", message);
+            embedBuilder.AddField("Time", DateTime.Now.ToString("O"));
+            embedBuilder.AddField("Weitere Schritte", "Bitte Kimon mit einem Screenshot kontaktieren, damit er den Fehler beheben kann c:");
+            embedBuilder.Author = new EmbedAuthorBuilder().WithName("Asunara-Event-Manager");
+            
+            await context.Interaction.ModifyOriginalResponseAsync(x =>
+            {
+                x.Embed = embedBuilder.Build();
+            });
+        };
         
         _client.InteractionCreated += async interaction =>
         {
@@ -114,6 +165,11 @@ public class DiscordService
             var ctx = new SocketInteractionContext(_client, interaction);
             try
             {
+                if (interaction.Type == InteractionType.ApplicationCommand)
+                {
+                    await ctx.Interaction.DeferAsync(true);
+                }
+
                 await interactionService.ExecuteCommandAsync(ctx, _services);
             }
             catch (Exception e)
