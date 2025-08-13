@@ -4,6 +4,8 @@ using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using EventManager.Configuration;
+using EventManager.Events.AddFeedbackPreference;
+using EventManager.Events.AddReminderPreference;
 using EventManager.Events.EventCompleted;
 using EventManager.Events.EventCreated;
 using EventManager.Events.EventDeleted;
@@ -27,7 +29,7 @@ public class DiscordService
     private readonly ISender _sender;
     private readonly IServiceProvider _services;
     private readonly ISchedulerFactory _schedulerFactory;
-    
+
     public DiscordService(ILogger<DiscordService> logger, RootConfig config, DiscordSocketClient client, ISender sender, IServiceProvider services, ISchedulerFactory schedulerFactory)
     {
         _logger = logger;
@@ -43,6 +45,7 @@ public class DiscordService
         if (string.IsNullOrWhiteSpace(_config.Discord?.Token))
         {
             _logger.LogCritical("Discord Token fehlt, Programm wird beendet!");
+
             throw new Exception("Discord token is missing");
         }
 
@@ -54,7 +57,8 @@ public class DiscordService
         _client.GuildScheduledEventCreated += ClientOnGuildScheduledEventCreated;
         _client.GuildScheduledEventUserAdd += ClientOnGuildScheduledEventUserAdd;
         _client.GuildScheduledEventCompleted += ClientOnGuildScheduledEventCompleted;
-        
+        _client.ButtonExecuted += ClientOnButtonExecuted;
+
         await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
         await _client.StartAsync();
         IScheduler scheduler = await _schedulerFactory.GetScheduler();
@@ -65,6 +69,51 @@ public class DiscordService
         await scheduler.Shutdown();
         await _client.LogoutAsync();
         await _client.StopAsync();
+    }
+
+    private async Task ClientOnButtonExecuted(SocketMessageComponent arg)
+    {
+        await arg.DeferLoadingAsync(ephemeral: true);
+        
+        switch (arg.Data.CustomId)
+        {
+            case Konst.ButtonReminderNo:
+                await _sender.Send(new AddReminderPreferenceEvent()
+                {
+                    DiscordUserId = arg.User.Id, Preference = false
+                });
+
+                break;
+
+            case Konst.ButtonReminderYes:
+                await _sender.Send(new AddReminderPreferenceEvent()
+                {
+                    DiscordUserId = arg.User.Id, Preference = true
+                });
+
+                break;
+
+            case Konst.ButtonFeedbackNo:
+                await _sender.Send(new AddFeedbackPreferenceEvent()
+                {
+                    DiscordUserId = arg.User.Id, Preference = false
+                });
+
+                break;
+
+            case Konst.ButtonFeedbackYes:
+                await _sender.Send(new AddFeedbackPreferenceEvent()
+                {
+                    DiscordUserId = arg.User.Id, Preference = true
+                });
+
+                break;
+        }
+        
+        await arg.ModifyOriginalResponseAsync(x =>
+        {
+            x.Content = "Deine Aktion wurde registriert!";
+        });
     }
 
     private Task ClientOnGuildScheduledEventCompleted(SocketGuildEvent socketEvent)
@@ -127,7 +176,7 @@ public class DiscordService
             ActivityType.Watching,
             ActivityProperties.Instance
         );
-        
+
         _logger.LogInformation("Start to download");
         await _client.DownloadUsersAsync([_client.GetGuild(_config.Discord.MainDiscordServerId), _client.GetGuild(_config.Discord.TeamDiscordServerId)]);
         _logger.LogInformation("Download complete");
@@ -187,18 +236,23 @@ public class DiscordService
         {
             case InteractionCommandError.UnmetPrecondition:
                 message = $"Unmet Precondition: {result.ErrorReason}";
+
                 break;
             case InteractionCommandError.UnknownCommand:
                 message = "Unknown command";
+
                 break;
             case InteractionCommandError.BadArgs:
                 message = "Invalid number or arguments";
+
                 break;
             case InteractionCommandError.Exception:
                 message = $"Command exception: {result.ErrorReason}";
+
                 break;
             case InteractionCommandError.Unsuccessful:
                 message = "Command could not be executed";
+
                 break;
             default:
                 return;

@@ -101,6 +101,7 @@ public static class ConfigureServices
         services.AddTransient<QotdMessageRepository>();
         services.AddTransient<QotdQuestionRepository>();
         services.AddTransient<EventRestrictionRepository>();
+        services.AddTransient<UserPreferenceRepository>();
     }
 
     private static void AddInteractions(this IServiceCollection services)

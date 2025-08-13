@@ -1,10 +1,9 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data.Repositories;
+using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.CheckFskRestrictionOnUser;
-using EventManager.Models.Restrictions;
 using MediatR;
 
 namespace EventManager.Events.MemberAddedEvent;
@@ -34,6 +33,11 @@ public class MemberAddedEventEventHandler : IRequestHandler<MemberAddedEventEven
 
         SocketGuildUser user = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.User.Id);
 
+        await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
+        {
+            DiscordUser = user
+        }, cancellationToken);
+        
         var checkResult = await _sender.Send(new CheckFskRestrictionOnUserEvent()
         {
             Event = discordEvent, User = user

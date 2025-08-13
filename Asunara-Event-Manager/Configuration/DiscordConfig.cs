@@ -18,6 +18,15 @@ public class DiscordConfig
     public QotdConfig Qotd { get; set; } = new QotdConfig();
     
     public FskConfig Fsk { get; set; } = new FskConfig();
+    
+    public Emotes Emote { get; set; } = new Emotes();
+}
+
+public class Emotes
+{
+    public string Yes { get; set; }
+    
+    public string No { get; set; }
 }
 
 public class QotdConfig
