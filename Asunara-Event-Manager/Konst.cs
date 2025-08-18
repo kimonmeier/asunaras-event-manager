@@ -19,6 +19,10 @@ public static class Konst
     public const string ButtonFeedback4Star = "button-feedback-star-4";
     public const string ButtonFeedback5Star = "button-feedback-star-5";
     
+    public const string ButtonFeedbackVisibilityGroup = "button-feedback-visibility-";
+    public const string ButtonFeedbackVisibilityAnonymous = "button-feedback-visibility-anonymous";
+    public const string ButtonFeedbackVisibilityPublic = "button-feedback-visibility-public";
+    
     public const string ButtonMoreFeedback = "button-more-feedback";
 
     public const string PayloadDelimiter = "||";

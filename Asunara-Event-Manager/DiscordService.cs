@@ -155,6 +155,7 @@ public class DiscordService
         _logger.LogInformation("Start to download");
         await _client.DownloadUsersAsync([_client.GetGuild(_config.Discord.MainDiscordServerId), _client.GetGuild(_config.Discord.TeamDiscordServerId)]);
         _logger.LogInformation("Download complete");
+        
         await _client.SetActivityAsync(activity);
         var interactionService = new InteractionService(_client.Rest, new InteractionServiceConfig()
         {

@@ -13,8 +13,8 @@ public class EventFeedback : IEntity
     public ulong UserId { get; set; }
     
     public int Score { get; set; }
-    
-    public bool? Repeat { get; set; }
+
+    public bool Anonymous { get; set; } = true;
     
     public string? Good { get; set; }
     

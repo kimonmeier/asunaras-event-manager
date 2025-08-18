@@ -48,6 +48,8 @@ public class QotdConfig
 public class Events
 {
     public ulong EventParticipantRoleId { get; set; }
+    
+    public ulong FeedbackChannelId { get; set; }
 }
 
 public class FskConfig

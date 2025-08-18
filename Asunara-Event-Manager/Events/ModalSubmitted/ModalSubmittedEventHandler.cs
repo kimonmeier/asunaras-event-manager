@@ -1,5 +1,8 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
+using EventManager.Configuration;
 using EventManager.Events.EventExtendedFeedback;
+using EventManager.Events.SendMessageInChannel;
 using MediatR;
 
 namespace EventManager.Events.ModalSubmitted;
@@ -7,10 +10,12 @@ namespace EventManager.Events.ModalSubmitted;
 public class ModalSubmittedEventHandler : IRequestHandler<ModalSubmittedEvent>
 {
     private readonly ISender _sender;
+    private readonly RootConfig _config;
 
-    public ModalSubmittedEventHandler(ISender sender)
+    public ModalSubmittedEventHandler(ISender sender, RootConfig config)
     {
         _sender = sender;
+        _config = config;
     }
 
     public async Task Handle(ModalSubmittedEvent request, CancellationToken cancellationToken)
@@ -40,10 +45,9 @@ public class ModalSubmittedEventHandler : IRequestHandler<ModalSubmittedEvent>
             Suggestion = suggestionInput
         });
 
-
         await modal.ModifyOriginalResponseAsync(x =>
         {
-            x.Content = "Dein Feedback wurde erfolgreich gesendet!";
+            x.Content = "Dein Feedback wurde erfolgreich dem Team übermittelt. Vielen Dank für deine Zeit!";
         });
     }
 }

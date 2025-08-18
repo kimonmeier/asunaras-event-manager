@@ -25,4 +25,9 @@ public class EventFeedbackRepository : GenericRepository<EventFeedback>
             UserId = userId,
         });
     }
+
+    public async Task<List<EventFeedback>> GetByDiscordEvent(Guid discordEventId)
+    {
+        return await Entities.Where(x => x.DiscordEventId == discordEventId).ToListAsync();
+    }
 }

@@ -1,6 +1,7 @@
 ﻿using EventManager.Data;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
+using EventManager.Events.UpdateEventFeedbackThread;
 using MediatR;
 
 namespace EventManager.Events.EventSendFeedbackStar;
@@ -10,12 +11,14 @@ public class EventSendFeedbackStarEventHandler : IRequestHandler<EventSendFeedba
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly EventFeedbackRepository _eventFeedbackRepository;
+    private readonly ISender _sender;
 
-    public EventSendFeedbackStarEventHandler(DbTransactionFactory dbTransactionFactory, EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository)
+    public EventSendFeedbackStarEventHandler(DbTransactionFactory dbTransactionFactory, EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository, ISender sender)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _eventFeedbackRepository = eventFeedbackRepository;
         _discordEventRepository = discordEventRepository;
+        _sender = sender;
     }
 
     public async Task Handle(EventSendFeedbackStarEvent request, CancellationToken cancellationToken)
@@ -33,5 +36,10 @@ public class EventSendFeedbackStarEventHandler : IRequestHandler<EventSendFeedba
         eventFeedback.Score = request.StarCount;
         
         await transaction.Commit(cancellationToken);
+        
+        await _sender.Send(new UpdateEventFeedbackThreadEvent()
+        {
+            DiscordEventId = request.DiscordEventId
+        }, cancellationToken);
     }
 }

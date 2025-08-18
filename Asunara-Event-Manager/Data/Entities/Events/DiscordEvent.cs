@@ -15,4 +15,6 @@ public class DiscordEvent : IEntity
     public bool IsCompleted { get; set; }
     
     public List<EventRestriction> Restrictions { get; set; } = new List<EventRestriction>();
+    
+    public ulong? FeedbackMessage { get; set; }
 }

@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
+using EventManager.Events.UpdateEventFeedbackThread;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -14,13 +15,15 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
     private readonly RootConfig _config;
     private readonly UserPreferenceRepository _userPreferenceRepository;
     private readonly ILogger<EventStartFeedbackEventHandler> _logger;
+    private readonly ISender _sender;
 
-    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, ILogger<EventStartFeedbackEventHandler> logger)
+    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, ILogger<EventStartFeedbackEventHandler> logger, ISender sender)
     {
         _client = client;
         _userPreferenceRepository = userPreferenceRepository;
         _config = config;
         _logger = logger;
+        _sender = sender;
     }
 
     public async Task Handle(EventStartFeedbackEvent request, CancellationToken cancellationToken)
@@ -31,13 +34,15 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             CancelToken = cancellationToken
         }).FlattenAsync();
 
-
+        await _sender.Send(new UpdateEventFeedbackThreadEvent()
+        {
+            DiscordEventId = request.Event.DiscordId,
+        }, cancellationToken);
+        
         foreach (var eventUser in users)
         {
             // Remove Participant Role
-#if !DEBUG
             await guild.GetUser(eventUser.Id).RemoveRoleAsync(_config.Discord.Event.EventParticipantRoleId);
-#endif
 
             var userPreference = await _userPreferenceRepository.GetByDiscordAsync(eventUser.Id);
             if (userPreference is null)

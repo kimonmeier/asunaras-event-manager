@@ -79,7 +79,7 @@ public static class ConfigureServices
         {
             AlwaysDownloadUsers = true,
             AlwaysDownloadDefaultStickers = true,
-            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages,
         });
         services.AddSingleton<DiscordService>();
     }

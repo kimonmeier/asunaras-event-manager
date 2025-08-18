@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Globalization;
 using EventManager;
 using EventManager.Data;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Quartz;
+
+Thread.CurrentThread.CurrentCulture = new CultureInfo("de-DE");
+Thread.CurrentThread.CurrentUICulture = new CultureInfo("de-DE");
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.dev.json", optional: true, reloadOnChange: true);
