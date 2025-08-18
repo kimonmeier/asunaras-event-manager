@@ -21,4 +21,6 @@ public class EventFeedback : IEntity
     public string? Critic { get; set; }
     
     public string? Suggestion { get; set; }
+    
+    public ulong? FeedbackMessageId { get; set; }
 }

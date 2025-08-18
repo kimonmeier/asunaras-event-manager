@@ -15,7 +15,8 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
     private readonly DiscordSocketClient _client;
     private readonly RootConfig _config;
 
-    public EventExtendedFeedbackEventHandler(DbTransactionFactory dbTransactionFactory, EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository, DiscordSocketClient client, RootConfig config)
+    public EventExtendedFeedbackEventHandler(DbTransactionFactory dbTransactionFactory, EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository,
+        DiscordSocketClient client, RootConfig config)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _eventFeedbackRepository = eventFeedbackRepository;
@@ -32,19 +33,16 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
         {
             throw new Exception("Event not found");
         }
-        
+
         var transaction = _dbTransactionFactory.CreateTransaction();
-        
+
         var eventFeedback = await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
         eventFeedback.Critic = request.Critic;
         eventFeedback.Good = request.Good;
         eventFeedback.Suggestion = request.Suggestion;
-        
-        await transaction.Commit(cancellationToken);
 
-        IMessage message = await _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Event.FeedbackChannelId).GetMessageAsync(@event.FeedbackMessage!.Value);
-        await message.Thread.SendMessageAsync(embed:
-            new EmbedBuilder()
+
+        Embed feedbackEmbed = new EmbedBuilder()
             .WithAuthor("Event-Manager")
             .WithColor(Color.Purple)
             .AddField("Ersteller", eventFeedback.Anonymous ? "Anonym!" : _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.DiscordUserId).DisplayName)
@@ -52,8 +50,25 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
             .AddField("Was dem User gefallen hat", FormatField(eventFeedback.Good))
             .AddField("Was dem User nicht gefallen hat", FormatField(eventFeedback.Critic))
             .AddField("Was der User verbessern würde", FormatField(eventFeedback.Suggestion))
-            .Build()
-        );
+            .Build();
+
+        IMessage message = await _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Event.FeedbackChannelId)
+            .GetMessageAsync(@event.FeedbackMessage!.Value);
+        if (@eventFeedback.FeedbackMessageId.HasValue)
+        {
+            await message.Thread.ModifyMessageAsync(@eventFeedback.FeedbackMessageId.Value, x =>
+            {
+                x.Embed = feedbackEmbed;
+            });
+        }
+        else
+        {
+            IUserMessage userMessage = await message.Thread.SendMessageAsync(embed: feedbackEmbed);
+            
+            eventFeedback.FeedbackMessageId = userMessage.Id;
+        }
+
+        await transaction.Commit(cancellationToken);
     }
 
     private string FormatField(string? field)
