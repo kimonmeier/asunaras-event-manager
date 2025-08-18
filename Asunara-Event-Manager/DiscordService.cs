@@ -6,11 +6,14 @@ using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Events.AddFeedbackPreference;
 using EventManager.Events.AddReminderPreference;
+using EventManager.Events.ButtonPressed;
 using EventManager.Events.EventCompleted;
 using EventManager.Events.EventCreated;
 using EventManager.Events.EventDeleted;
+using EventManager.Events.EventSendFeedbackStar;
 using EventManager.Events.MemberAddedEvent;
 using EventManager.Events.MemberJoinedChannel;
+using EventManager.Events.ModalSubmitted;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -58,6 +61,7 @@ public class DiscordService
         _client.GuildScheduledEventUserAdd += ClientOnGuildScheduledEventUserAdd;
         _client.GuildScheduledEventCompleted += ClientOnGuildScheduledEventCompleted;
         _client.ButtonExecuted += ClientOnButtonExecuted;
+        _client.ModalSubmitted += ClientOnModalSubmitted;
 
         await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
         await _client.StartAsync();
@@ -71,48 +75,19 @@ public class DiscordService
         await _client.StopAsync();
     }
 
-    private async Task ClientOnButtonExecuted(SocketMessageComponent arg)
+    private Task ClientOnModalSubmitted(SocketModal arg)
     {
-        await arg.DeferLoadingAsync(ephemeral: true);
-        
-        switch (arg.Data.CustomId)
+        return _sender.Send(new ModalSubmittedEvent()
         {
-            case Konst.ButtonReminderNo:
-                await _sender.Send(new AddReminderPreferenceEvent()
-                {
-                    DiscordUserId = arg.User.Id, Preference = false
-                });
+            ModalData = arg
+        });
+    }
 
-                break;
-
-            case Konst.ButtonReminderYes:
-                await _sender.Send(new AddReminderPreferenceEvent()
-                {
-                    DiscordUserId = arg.User.Id, Preference = true
-                });
-
-                break;
-
-            case Konst.ButtonFeedbackNo:
-                await _sender.Send(new AddFeedbackPreferenceEvent()
-                {
-                    DiscordUserId = arg.User.Id, Preference = false
-                });
-
-                break;
-
-            case Konst.ButtonFeedbackYes:
-                await _sender.Send(new AddFeedbackPreferenceEvent()
-                {
-                    DiscordUserId = arg.User.Id, Preference = true
-                });
-
-                break;
-        }
-        
-        await arg.ModifyOriginalResponseAsync(x =>
+    private Task ClientOnButtonExecuted(SocketMessageComponent arg)
+    {
+        return _sender.Send(new ButtonPressedEvent()
         {
-            x.Content = "Deine Aktion wurde registriert!";
+            Context = arg
         });
     }
 

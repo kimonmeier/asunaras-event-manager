@@ -20,6 +20,8 @@ public class DiscordConfig
     public FskConfig Fsk { get; set; } = new FskConfig();
     
     public Emotes Emote { get; set; } = new Emotes();
+    
+    public Events Event { get; set; } = new Events();
 }
 
 public class Emotes
@@ -41,6 +43,11 @@ public class QotdConfig
     public string Text { get; set; }
     
     public string ThreadTitle { get; set; }
+}
+
+public class Events
+{
+    public ulong EventParticipantRoleId { get; set; }
 }
 
 public class FskConfig

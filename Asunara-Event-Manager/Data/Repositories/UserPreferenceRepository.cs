@@ -17,7 +17,7 @@ public class UserPreferenceRepository : GenericRepository<UserPreference>
 
     public async Task<UserPreference> GetOrCreateByDiscordAsync(ulong discordId)
     {
-        var userPreference = await Entities.SingleOrDefaultAsync(x => x.DiscordUserId == discordId);
+        var userPreference = await GetByDiscordAsync(discordId);
 
         if (userPreference is not null)
         {
@@ -29,5 +29,10 @@ public class UserPreferenceRepository : GenericRepository<UserPreference>
         {
             DiscordUserId = discordId,
         });
+    }
+
+    public async Task<UserPreference?> GetByDiscordAsync(ulong discordId)
+    {
+        return await Entities.SingleOrDefaultAsync(x => x.DiscordUserId == discordId);
     }
 }

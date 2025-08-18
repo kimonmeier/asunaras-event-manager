@@ -1,5 +1,6 @@
 ﻿using EventManager.Data;
 using EventManager.Data.Repositories;
+using EventManager.Events.EventStartFeedback;
 using MediatR;
 
 namespace EventManager.Events.EventCompleted;
@@ -8,11 +9,13 @@ public class EventCompletedEventHandler : IRequestHandler<EventCompletedEvent>
 {
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly DbTransactionFactory _dbTransactionFactory;
+    private readonly ISender _sender;
 
-    public EventCompletedEventHandler(DbTransactionFactory dbTransactionFactory, DiscordEventRepository discordEventRepository)
+    public EventCompletedEventHandler(DbTransactionFactory dbTransactionFactory, DiscordEventRepository discordEventRepository, ISender sender)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _discordEventRepository = discordEventRepository;
+        _sender = sender;
     }
 
     public async Task Handle(EventCompletedEvent request, CancellationToken cancellationToken)
@@ -22,6 +25,11 @@ public class EventCompletedEventHandler : IRequestHandler<EventCompletedEvent>
         {
             throw new Exception("Event not found");
         }
+
+        await _sender.Send(new EventStartFeedbackEvent()
+        {
+            Event = @event,
+        }, cancellationToken);
         
         Transaction transaction = _dbTransactionFactory.CreateTransaction();
 
