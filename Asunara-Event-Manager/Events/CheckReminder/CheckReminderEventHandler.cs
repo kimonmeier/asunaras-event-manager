@@ -32,13 +32,17 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
         
         foreach (var discordEvent in allUncompleted)
         {
-            if (discordEvent.Date < DateTime.Now.AddHours(-1))
+            SocketGuild socketGuild = _discordSocketClient.GetGuild(_config.Discord.MainDiscordServerId);
+            SocketGuildEvent guildEvent = socketGuild.GetEvent(discordEvent.DiscordId);
+            
+            _logger.LogDebug("Checking reminder for event {DiscordEventName}:{DiscordEventId}", discordEvent.Name, discordEvent.DiscordId);
+            _logger.LogDebug("Event start time: {EventStartTime}", (guildEvent?.StartTime.UtcDateTime) ?? DateTime.MinValue);
+            _logger.LogDebug("Current time: {CurrentTime}", DateTime.UtcNow);
+            
+            if (guildEvent.StartTime.UtcDateTime > DateTime.UtcNow.AddHours(1))
             {
                 continue;
             }
-
-            SocketGuild socketGuild = _discordSocketClient.GetGuild(_config.Discord.MainDiscordServerId);
-            SocketGuildEvent guildEvent = socketGuild.GetEvent(discordEvent.DiscordId);
 
             IEnumerable<RestUser> interestedUsers = await guildEvent.GetUsersAsync(new RequestOptions() { CancelToken = cancellationToken }).FlattenAsync();
             foreach (var user in interestedUsers)
