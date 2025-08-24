@@ -27,9 +27,9 @@ public static class ConfigureServices
         {
             throw new Exception("Configuration is empty");
         }
-        
+
         services.AddSingleton(rootConfig);
-        
+
         services.AddCustomLogging(configuration);
         services.AddDatabase(rootConfig);
         services.AddRepositories();
@@ -91,7 +91,7 @@ public static class ConfigureServices
             x.RegisterServicesFromAssembly(typeof(Program).Assembly);
         });
         services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-        
+
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     }
 
@@ -125,14 +125,19 @@ public static class ConfigureServices
                     .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.ToTimeSpan().Hours, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
-            
+
             options.ScheduleJob<QotdCheckQuestionsJob>(trigger =>
             {
                 trigger
                     .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(rootConfig.Discord.Qotd.Time.AddHours(-12).ToTimeSpan().Hours, rootConfig.Discord.Qotd.Time.Minute)
                         .WithMisfireHandlingInstructionFireAndProceed());
             });
-            
+
+            options.ScheduleJob<CheckEventReminderJob>(trigger =>
+            {
+                trigger
+                    .WithSimpleSchedule(SimpleScheduleBuilder.RepeatHourlyForever().WithMisfireHandlingInstructionFireNow());
+            });
 
         });
 

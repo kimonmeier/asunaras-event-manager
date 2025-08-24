@@ -1,14 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
-using System.Text;
-using Discord.Interactions;
-using EventManager.Data.Repositories;
-using EventManager.Events.AddFSKRestriction;
+﻿using Discord.Interactions;
+using EventManager.Events.AskFeedback;
 using MediatR;
 
 namespace EventManager.Commands;
 
-[Group("event-restrictions", "Commands die das Event beeinflussen")]
+[Group("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten")]
 public class EventInteraction : InteractionModuleBase
 {
     private readonly ISender _sender;
@@ -18,17 +14,12 @@ public class EventInteraction : InteractionModuleBase
         _sender = sender;
     }
 
-    [SlashCommand("fsk", "Fügt eine FSK Restriktion auf ein Event ein")]
-    public async Task AddFskRestriction([Autocomplete(typeof(EventAutocompleteHandler))] string eventId, int? maxAge = null, int? minAge =  null)
+    [SlashCommand("ask-feedback", "Startet den Feedback-Loop manuell!")]
+    public async Task AskForFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId)
     {
-        await _sender.Send(new AddFSKRestrictionEvent()
+        await _sender.Send(new AskFeedbackEvent()
         {
-            DiscordEventId = Guid.Parse(eventId), MaxAge = maxAge, MinAge = minAge
-        });
-        
-        await ModifyOriginalResponseAsync(x =>
-        {
-            x.Content = "Die Restriktion wurde erstellt";
+            EventId = Guid.Parse(eventId)
         });
     }
 }

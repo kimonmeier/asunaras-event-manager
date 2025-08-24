@@ -52,8 +52,11 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
             .AddField("Was der User verbessern würde", FormatField(eventFeedback.Suggestion))
             .Build();
 
-        IMessage message = await _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Event.FeedbackChannelId)
+        IMessage message = await _client
+            .GetGuild(_config.Discord.TeamDiscordServerId)
+            .GetTextChannel(_config.Discord.Event.FeedbackChannelId)
             .GetMessageAsync(@event.FeedbackMessage!.Value);
+        
         if (@eventFeedback.FeedbackMessageId.HasValue)
         {
             await message.Thread.ModifyMessageAsync(@eventFeedback.FeedbackMessageId.Value, x =>
