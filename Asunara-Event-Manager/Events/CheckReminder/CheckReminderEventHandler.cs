@@ -4,6 +4,7 @@ using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 using EventManager.Configuration;
+using EventManager.Data.Entities.Events;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
 using MediatR;
@@ -57,24 +58,30 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
             IEnumerable<RestUser> interestedUsers = await guildEvent.GetUsersAsync(new RequestOptions() { CancelToken = cancellationToken }).FlattenAsync();
             foreach (var user in interestedUsers)
             {
-                UserPreference preference = await _userPreferenceRepository.GetByDiscordAsync(user.Id);
-
-                if (!preference.AllowReminderForEvent)
-                {
-                    _logger.LogInformation("User {UserId} is not allowed to receive reminders for event {DiscordEventName}:{DiscordEventId}", user.Id, discordEvent.Name, discordEvent.DiscordId);
-                    continue;
-                }
-
-                RestDMChannel? dmChannel = await user.CreateDMChannelAsync();
-
-                if (dmChannel is null)
-                {
-                    _logger.LogError("Could not open DM Channel with: <@" + user.Id + ">");
-                    continue;
-                }
-
-                await dmChannel.SendMessageAsync($"Hallöchen {socketGuild.GetUser(user.Id).DisplayName},\n\n Du hast dich für das Event {guildEvent.Name} angemeldet! Dieses findet **heute** um **{discordEvent.Date.ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/asunara?event={discordEvent.DiscordId} ||");
+                await SendEventReminderMessage(user, discordEvent, socketGuild, guildEvent);
             }
         }
+    }
+
+    private async Task SendEventReminderMessage(RestUser user, DiscordEvent discordEvent, SocketGuild socketGuild, SocketGuildEvent guildEvent)
+    {
+        UserPreference? preference = await _userPreferenceRepository.GetByDiscordAsync(user.Id);
+
+        if (!(preference?.AllowReminderForEvent ?? false))
+        {
+            _logger.LogInformation("User {UserId} is not allowed to receive reminders for event {DiscordEventName}:{DiscordEventId}", user.Id, discordEvent.Name, discordEvent.DiscordId);
+
+            return;
+        }
+
+        RestDMChannel? dmChannel = await user.CreateDMChannelAsync();
+
+        if (dmChannel is null)
+        {
+            _logger.LogError("Could not open DM Channel with: <@" + user.Id + ">");
+            return;
+        }
+
+        await dmChannel.SendMessageAsync($"Hallöchen {socketGuild.GetUser(user.Id).DisplayName},\n\n Du hast dich für das Event {guildEvent.Name} angemeldet! Dieses findet **heute** um **{discordEvent.Date.ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/asunara?event={discordEvent.DiscordId} ||");
     }
 }
