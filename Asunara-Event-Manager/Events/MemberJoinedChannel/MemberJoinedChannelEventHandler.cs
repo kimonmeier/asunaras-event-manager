@@ -4,6 +4,7 @@ using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckFskRestrictionOnUser;
 using EventManager.Models.Restrictions;
+using EventManager.Services;
 using MediatR;
 
 namespace EventManager.Events.MemberJoinedChannel;
@@ -12,11 +13,13 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
 {
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly ISender _sender;
+    private readonly EventParticipantService _eventParticipantService;
 
-    public MemberJoinedChannelEventHandler(DiscordEventRepository discordEventRepository, ISender sender)
+    public MemberJoinedChannelEventHandler(DiscordEventRepository discordEventRepository, ISender sender, EventParticipantService eventParticipantService)
     {
         _discordEventRepository = discordEventRepository;
         _sender = sender;
+        _eventParticipantService = eventParticipantService;
     }
 
     public async Task Handle(MemberJoinedChannelEvent request, CancellationToken cancellationToken)
@@ -31,11 +34,13 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
             return;
         }
         
+        _eventParticipantService.AddParticipant(@event.Id, request.User.Id);
+        
         var checkResult = await _sender.Send(new CheckFskRestrictionOnUserEvent()
         {
             User = request.User,
             Event = (await _discordEventRepository.FindWithRestrictionsByDiscordId(@event.DiscordId))!
-        });
+        }, cancellationToken);
 
         if (checkResult.Success)
         {

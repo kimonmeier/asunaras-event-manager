@@ -4,7 +4,9 @@ using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
 using EventManager.Events.UpdateEventFeedbackThread;
+using EventManager.Services;
 using MediatR;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
 
 namespace EventManager.Events.EventStartFeedback;
@@ -16,23 +18,25 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
     private readonly UserPreferenceRepository _userPreferenceRepository;
     private readonly ILogger<EventStartFeedbackEventHandler> _logger;
     private readonly ISender _sender;
+    private readonly EventParticipantService _eventParticipantService;
 
-    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, ILogger<EventStartFeedbackEventHandler> logger, ISender sender)
+    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, ILogger<EventStartFeedbackEventHandler> logger, ISender sender, EventParticipantService eventParticipantService)
     {
         _client = client;
         _userPreferenceRepository = userPreferenceRepository;
         _config = config;
         _logger = logger;
         _sender = sender;
+        _eventParticipantService = eventParticipantService;
     }
 
     public async Task Handle(EventStartFeedbackEvent request, CancellationToken cancellationToken)
     {
         SocketGuild guild = _client.GetGuild(_config.Discord.MainDiscordServerId);
-        var users = await guild.GetEvent(request.Event.DiscordId).GetUsersAsync(new RequestOptions()
+        var users = (await guild.GetEvent(request.Event.DiscordId).GetUsersAsync(new RequestOptions()
         {
             CancelToken = cancellationToken
-        }).FlattenAsync();
+        }).FlattenAsync()).ToList();
 
         await _sender.Send(new UpdateEventFeedbackThreadEvent()
         {
@@ -44,19 +48,39 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             // Remove Participant Role
             await guild.GetUser(eventUser.Id).RemoveRoleAsync(_config.Discord.Event.EventParticipantRoleId);
 
-            var userPreference = await _userPreferenceRepository.GetByDiscordAsync(eventUser.Id);
-            if (userPreference is null)
+            if (!_eventParticipantService.HasParticipant(request.Event.Id, eventUser.Id))
             {
+                _logger.LogInformation("User {UserId} is not a participant of event but was interested {DiscordEventName}{DiscordEventId}", eventUser.Id, request.Event.Name, request.Event.DiscordId);
                 continue;
             }
-
-            if (!userPreference.AllowReminderInPrivateMessage)
-            {
-                continue;
-            }
-
-            await StartFeedbackLoopUser(request.Event, eventUser.Id);
+            
+            await CheckUser(request.Event, eventUser.Id);
         }
+
+        // Remove already sent
+        List<ulong> participants = _eventParticipantService.GetParticipants(request.Event.Id);
+        participants.RemoveAll(x => users.Any(z => z.Id == x));
+
+        foreach (var eventUserId in participants)
+        {
+            await CheckUser(request.Event, eventUserId);
+        }
+    }
+
+    private async Task CheckUser(DiscordEvent discordEvent, ulong userId)
+    {
+        var userPreference = await _userPreferenceRepository.GetByDiscordAsync(userId);
+        if (userPreference is null)
+        {
+            return;
+        }
+
+        if (!userPreference.AllowReminderInPrivateMessage)
+        {
+            return;
+        }
+
+        await StartFeedbackLoopUser(discordEvent, userId);
     }
 
     private async Task StartFeedbackLoopUser(DiscordEvent discordEvent, ulong userId)

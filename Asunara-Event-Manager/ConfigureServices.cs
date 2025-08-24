@@ -7,6 +7,7 @@ using EventManager.Commands;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
+using EventManager.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -82,6 +83,7 @@ public static class ConfigureServices
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages,
         });
         services.AddSingleton<DiscordService>();
+        services.AddSingleton<EventParticipantService>();
     }
 
     private static void AddPipeline(this IServiceCollection services)
