@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data.Repositories;
 using MediatR;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
 using Quartz.Core;
 
@@ -34,6 +35,12 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
         {
             SocketGuild socketGuild = _discordSocketClient.GetGuild(_config.Discord.MainDiscordServerId);
             SocketGuildEvent guildEvent = socketGuild.GetEvent(discordEvent.DiscordId);
+
+            if (guildEvent is null)
+            {
+                _logger.LogError("Could not find guild event for event {DiscordEventName}:{DiscordEventId}", discordEvent.Name, discordEvent.DiscordId);
+                continue;
+            }
             
             _logger.LogDebug("Checking reminder for event {DiscordEventName}:{DiscordEventId}", discordEvent.Name, discordEvent.DiscordId);
             _logger.LogDebug("Event start time: {EventStartTime}", (guildEvent?.StartTime.UtcDateTime) ?? DateTime.MinValue);
