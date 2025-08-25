@@ -38,13 +38,11 @@ public class UpdateEventFeedbackThreadEventHandler : IRequestHandler<UpdateEvent
         var feedbacks = await _eventFeedbackRepository.GetByDiscordEvent(@event.Id);
 
         SocketTextChannel feedbackTextChannel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Event.FeedbackChannelId);
-        SocketGuildEvent guildEvent = _client.GetGuild(_config.Discord.MainDiscordServerId).GetEvent(@event.DiscordId);
         EmbedBuilder embedBuilder = new EmbedBuilder()
             .WithAuthor("Event-Manager")
             .WithColor(Color.Green)
-            .WithThumbnailUrl(guildEvent.GetCoverImageUrl())
-            .WithTitle($"{guildEvent.Name} vom {@event.Date.ToShortDateString()}")
-            .WithDescription($"Dies ist das Feedback für das {guildEvent.Name} Event was am {@event.Date.ToShortDateString()} stattgefunden hat!")
+            .WithTitle($"{@event.Name} vom {@event.Date.ToShortDateString()}")
+            .WithDescription($"Dies ist das Feedback für das {@event.Name} Event was am {@event.Date.ToShortDateString()} stattgefunden hat!")
             .AddField("Bewertung", $"{(feedbacks.Any() ? feedbacks.Average(x => x.Score) : "?")} / 5");
 
         if (@event.FeedbackMessage.HasValue)

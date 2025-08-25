@@ -3,10 +3,10 @@ using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
+using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.UpdateEventFeedbackThread;
 using EventManager.Services;
 using MediatR;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
 
 namespace EventManager.Events.EventStartFeedback;
@@ -72,6 +72,10 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
         var userPreference = await _userPreferenceRepository.GetByDiscordAsync(userId);
         if (userPreference is null)
         {
+            await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
+            {
+                DiscordUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(userId),
+            });
             return;
         }
 
