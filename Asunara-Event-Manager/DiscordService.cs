@@ -165,7 +165,7 @@ public class DiscordService
     {
         return _sender.Send(new EventCreatedEvent()
         {
-            Datum = guildEvent.StartTime.DateTime, DiscordId = guildEvent.Id, EventName = guildEvent.Name
+            UtcDatum = guildEvent.StartTime.UtcDateTime, DiscordId = guildEvent.Id, EventName = guildEvent.Name
         });
     }
 
