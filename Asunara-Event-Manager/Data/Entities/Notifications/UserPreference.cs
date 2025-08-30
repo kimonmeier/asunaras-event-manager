@@ -8,7 +8,7 @@ public class UserPreference : IEntity
     
     public ulong DiscordUserId { get; set; }
     
-    public bool AllowReminderInPrivateMessage { get; set; }
+    public bool AllowReminderForFeedback { get; set; }
     
     public bool AllowReminderForEvent { get; set; }
 }

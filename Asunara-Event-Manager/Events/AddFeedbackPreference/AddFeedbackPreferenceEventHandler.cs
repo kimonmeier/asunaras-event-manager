@@ -21,7 +21,7 @@ public class AddFeedbackPreferenceEventHandler : IRequestHandler<AddFeedbackPref
         
         var user = await _userPreferenceRepository.GetOrCreateByDiscordAsync(request.DiscordUserId);
 
-        user.AllowReminderInPrivateMessage = request.Preference;
+        user.AllowReminderForFeedback = request.Preference;
 
         await transaction.Commit(cancellationToken);
     }

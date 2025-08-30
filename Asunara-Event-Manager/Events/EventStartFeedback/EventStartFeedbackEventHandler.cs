@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
@@ -20,7 +21,8 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
     private readonly ISender _sender;
     private readonly EventParticipantService _eventParticipantService;
 
-    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, ILogger<EventStartFeedbackEventHandler> logger, ISender sender, EventParticipantService eventParticipantService)
+    public EventStartFeedbackEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config,
+        ILogger<EventStartFeedbackEventHandler> logger, ISender sender, EventParticipantService eventParticipantService)
     {
         _client = client;
         _userPreferenceRepository = userPreferenceRepository;
@@ -33,16 +35,28 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
     public async Task Handle(EventStartFeedbackEvent request, CancellationToken cancellationToken)
     {
         SocketGuild guild = _client.GetGuild(_config.Discord.MainDiscordServerId);
-        var users = (await guild.GetEvent(request.Event.DiscordId).GetUsersAsync(new RequestOptions()
+        SocketGuildEvent? socketGuildEvent = guild.GetEvent(request.Event.DiscordId);
+
+        List<RestUser> users;
+
+        if (socketGuildEvent is not null)
         {
-            CancelToken = cancellationToken
-        }).FlattenAsync()).ToList();
+            users = (await socketGuildEvent.GetUsersAsync(new RequestOptions()
+            {
+                CancelToken = cancellationToken
+            }).FlattenAsync()).ToList();
+            
+        }
+        else
+        {
+            users = new List<RestUser>();
+        }
 
         await _sender.Send(new UpdateEventFeedbackThreadEvent()
         {
             DiscordEventId = request.Event.DiscordId,
         }, cancellationToken);
-        
+
         foreach (var eventUser in users)
         {
             // Remove Participant Role
@@ -50,10 +64,12 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
 
             if (!_eventParticipantService.HasParticipant(request.Event.Id, eventUser.Id))
             {
-                _logger.LogInformation("User {UserId} is not a participant of event but was interested {DiscordEventName}{DiscordEventId}", eventUser.Id, request.Event.Name, request.Event.DiscordId);
+                _logger.LogInformation("User {UserId} is not a participant of event but was interested {DiscordEventName}{DiscordEventId}", eventUser.Id, request.Event.Name,
+                    request.Event.DiscordId);
+
                 continue;
             }
-            
+
             await CheckUser(request.Event, eventUser.Id);
         }
 
@@ -76,10 +92,11 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             {
                 DiscordUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(userId),
             });
+
             return;
         }
 
-        if (!userPreference.AllowReminderInPrivateMessage)
+        if (!userPreference.AllowReminderForFeedback)
         {
             return;
         }
@@ -94,9 +111,10 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
         if (dmChannel is null)
         {
             _logger.LogError("Could not find DMChannel for user {UserId}", userId);
+
             return;
         }
-        
+
         ComponentBuilder feedbackComponent = new ComponentBuilder()
                 .AddRow(new ActionRowBuilder()
                     .WithButton("⭐", $"{Konst.ButtonFeedback1Star}{Konst.PayloadDelimiter}{discordEvent.DiscordId}")
