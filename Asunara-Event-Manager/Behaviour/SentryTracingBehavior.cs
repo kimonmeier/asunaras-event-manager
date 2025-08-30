@@ -25,9 +25,8 @@ public class SentryTracingBehavior<TRequest, TResponse>: IPipelineBehavior<TRequ
     private async static Task<TResponse> ExecuteRequestWithTransaction(RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         var transaction = SentrySdk.StartTransaction(
-            "mediatr.handle",
-            "mediatr.handle",
-            typeof(TRequest).Name
+            typeof(TRequest).Name,
+            "mediatr.handle"
         );
 
         // Set the transaction on the current scope
