@@ -26,12 +26,12 @@ public class SentryTracingBehavior<TRequest, TResponse>: IPipelineBehavior<TRequ
     {
         var transaction = SentrySdk.StartTransaction(
             "mediatr.handle",
+            "mediatr.handle",
             typeof(TRequest).Name
         );
 
         // Set the transaction on the current scope
         SentrySdk.ConfigureScope(scope => scope.Transaction = transaction);
-        SentrySdk.AddBreadcrumb(typeof(TRequest).Name, "mediatr");;
 
         try
         {
@@ -61,7 +61,6 @@ public class SentryTracingBehavior<TRequest, TResponse>: IPipelineBehavior<TRequ
         );
             
         SentrySdk.ConfigureScope(scope => scope.Span = childSpan);
-        SentrySdk.AddBreadcrumb(typeof(TRequest).Name, "mediatr");
         
         try
         {
