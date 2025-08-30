@@ -55,6 +55,11 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
                 continue;
             }
 
+            if (guildEvent.Status == GuildScheduledEventStatus.Active)
+            {
+                continue;
+            }
+
             IEnumerable<RestUser> interestedUsers = await guildEvent.GetUsersAsync(new RequestOptions() { CancelToken = cancellationToken }).FlattenAsync();
             foreach (var user in interestedUsers)
             {
