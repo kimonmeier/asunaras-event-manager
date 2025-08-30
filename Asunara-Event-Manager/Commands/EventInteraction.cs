@@ -1,5 +1,7 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using EventManager.Events.AskFeedback;
+using EventManager.Events.ForceFeedback;
 using MediatR;
 
 namespace EventManager.Commands;
@@ -20,6 +22,15 @@ public class EventInteraction : InteractionModuleBase
         await _sender.Send(new AskFeedbackEvent()
         {
             EventId = Guid.Parse(eventId)
+        });
+    }
+
+    [SlashCommand("force-feedback", "Forcet Feedback von einem User")]
+    public async Task ForceFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId, IUser user)
+    {
+        await _sender.Send(new ForceFeedbackEvent()
+        {
+            EventId = Guid.Parse(eventId), User = user
         });
     }
 }
