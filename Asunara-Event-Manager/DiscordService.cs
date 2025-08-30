@@ -19,6 +19,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quartz;
+using Sentry;
+using System;
+using System.Threading.Tasks;
+using Sentry.Protocol;
 using IResult = Discord.Interactions.IResult;
 using RunMode = Discord.Interactions.RunMode;
 
@@ -45,34 +49,63 @@ public class DiscordService
 
     public async Task RunAsync(IHost host)
     {
-        if (string.IsNullOrWhiteSpace(_config.Discord?.Token))
+        IScheduler scheduler;
+        var transaction = CreateDiscordTransaction("service_startup", "discord_service");
+        try
         {
-            _logger.LogCritical("Discord Token fehlt, Programm wird beendet!");
+            if (string.IsNullOrWhiteSpace(_config.Discord?.Token))
+            {
+                _logger.LogCritical("Discord Token fehlt, Programm wird beendet!");
+                transaction.Finish(SpanStatus.InvalidArgument);
 
-            throw new Exception("Discord token is missing");
+                throw new Exception("Discord token is missing");
+            }
+
+            _client.Log += ClientOnLog;
+            _client.Ready += ClientOnReady;
+            _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;
+            _client.JoinedGuild += ClientOnJoinedGuild;
+            _client.GuildScheduledEventCancelled += ClientOnGuildScheduledEventCancelled;
+            _client.GuildScheduledEventCreated += ClientOnGuildScheduledEventCreated;
+            _client.GuildScheduledEventUserAdd += ClientOnGuildScheduledEventUserAdd;
+            _client.GuildScheduledEventCompleted += ClientOnGuildScheduledEventCompleted;
+            _client.ButtonExecuted += ClientOnButtonExecuted;
+            _client.ModalSubmitted += ClientOnModalSubmitted;
+
+            await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
+            await _client.StartAsync();
+            scheduler = await _schedulerFactory.GetScheduler();
+
+            transaction.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            transaction.Finish(ex);
+
+            throw;
         }
 
-        _client.Log += ClientOnLog;
-        _client.Ready += ClientOnReady;
-        _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;
-        _client.JoinedGuild += ClientOnJoinedGuild;
-        _client.GuildScheduledEventCancelled += ClientOnGuildScheduledEventCancelled;
-        _client.GuildScheduledEventCreated += ClientOnGuildScheduledEventCreated;
-        _client.GuildScheduledEventUserAdd += ClientOnGuildScheduledEventUserAdd;
-        _client.GuildScheduledEventCompleted += ClientOnGuildScheduledEventCompleted;
-        _client.ButtonExecuted += ClientOnButtonExecuted;
-        _client.ModalSubmitted += ClientOnModalSubmitted;
-
-        await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
-        await _client.StartAsync();
-        IScheduler scheduler = await _schedulerFactory.GetScheduler();
-        await scheduler.StartDelayed(TimeSpan.FromSeconds(5));
-
+        await scheduler.StartDelayed(TimeSpan.FromSeconds(10));
         await host.WaitForShutdownAsync();
 
-        await scheduler.Shutdown();
-        await _client.LogoutAsync();
-        await _client.StopAsync();
+        
+        // Create a new transaction for the shutdown process
+        var shutdownTransaction = CreateDiscordTransaction("service_shutdown", "discord_service");
+        try
+        {
+            await scheduler.Shutdown();
+            await _client.LogoutAsync();
+            await _client.StopAsync();
+            shutdownTransaction.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            shutdownTransaction.Finish(ex);
+
+            throw;
+        }
+        
+        await SentrySdk.FlushAsync(TimeSpan.FromSeconds(10));
     }
 
     private Task ClientOnModalSubmitted(SocketModal arg)
@@ -146,107 +179,144 @@ public class DiscordService
 
     private async Task ClientOnReady()
     {
-        Game activity = new(
-            _config.Discord.Activity,
-            ActivityType.Watching,
-            ActivityProperties.Instance
-        );
-
-        _logger.LogInformation("Start to download");
-        await _client.DownloadUsersAsync([_client.GetGuild(_config.Discord.MainDiscordServerId), _client.GetGuild(_config.Discord.TeamDiscordServerId)]);
-        _logger.LogInformation("Download complete");
-        
-        await _client.SetActivityAsync(activity);
-        var interactionService = new InteractionService(_client.Rest, new InteractionServiceConfig()
+        var transaction = CreateDiscordTransaction("client_ready", "initialization");
+        try
         {
-            AutoServiceScopes = true,
-            DefaultRunMode = RunMode.Async,
-            EnableAutocompleteHandlers = true,
-            ThrowOnError = true,
-            LogLevel = LogSeverity.Info,
-        });
-        interactionService.Log += ClientOnLog;
+            Game activity = new(
+                _config.Discord.Activity,
+                ActivityType.Watching,
+                ActivityProperties.Instance
+            );
 
-        await interactionService.AddModulesAsync(typeof(Program).Assembly, _services);
+            _logger.LogInformation("Start to download");
+            await _client.DownloadUsersAsync([_client.GetGuild(_config.Discord.MainDiscordServerId), _client.GetGuild(_config.Discord.TeamDiscordServerId)]);
+            _logger.LogInformation("Download complete");
+
+            await _client.SetActivityAsync(activity);
+            var interactionService = new InteractionService(_client.Rest, new InteractionServiceConfig()
+            {
+                AutoServiceScopes = true,
+                DefaultRunMode = RunMode.Async,
+                EnableAutocompleteHandlers = true,
+                ThrowOnError = true,
+                LogLevel = LogSeverity.Info,
+            });
+            interactionService.Log += ClientOnLog;
+
+            await interactionService.AddModulesAsync(typeof(Program).Assembly, _services);
 
 #if DEBUG
-        await interactionService.RegisterCommandsToGuildAsync(679367558809255938, true);
+            await interactionService.RegisterCommandsToGuildAsync(679367558809255938, true);
 #else
-        await interactionService.RegisterCommandsToGuildAsync(_config.Discord.TeamDiscordServerId, true);
+            await interactionService.RegisterCommandsToGuildAsync(_config.Discord.TeamDiscordServerId, true);
 #endif
 
-        interactionService.SlashCommandExecuted += async (SlashCommandInfo commandInfo, Discord.IInteractionContext context, IResult result) =>
-        {
-            if (result.IsSuccess)
+            interactionService.SlashCommandExecuted += async (SlashCommandInfo commandInfo, Discord.IInteractionContext context, IResult result) =>
             {
-                return;
-            }
-
-            await HandleSlashCommandErrorAsync(context, result);
-        };
-
-        _client.InteractionCreated += async interaction =>
-        {
-            _logger.LogInformation("Started interaction");
-            var ctx = new SocketInteractionContext(_client, interaction);
-            try
-            {
-                if (interaction.Type == InteractionType.ApplicationCommand)
+                if (result.IsSuccess)
                 {
-                    await ctx.Interaction.DeferAsync(true);
+                    return;
                 }
 
-                await interactionService.ExecuteCommandAsync(ctx, _services);
-            }
-            catch (Exception e)
+                await HandleSlashCommandErrorAsync(context, result);
+            };
+
+            _client.InteractionCreated += async interaction =>
             {
-                _logger.LogError(e, "Error executing command");
-            }
-        };
+                var interactionTransaction = CreateDiscordTransaction("interaction_created", interaction.Type.ToString());
+                try
+                {
+                    _logger.LogInformation("Started interaction");
+                    var ctx = new SocketInteractionContext(_client, interaction);
+
+                    if (interaction.Type == InteractionType.ApplicationCommand)
+                    {
+                        await ctx.Interaction.DeferAsync(true);
+                    }
+
+                    await interactionService.ExecuteCommandAsync(ctx, _services);
+                    interactionTransaction.Finish(SpanStatus.Ok);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error executing command");
+                    interactionTransaction.Finish(e);
+                }
+            };
+
+            transaction.Finish(SpanStatus.Ok);
+        }
+        catch (Exception ex)
+        {
+            transaction.Finish(ex);
+
+            throw;
+        }
     }
 
     private async Task HandleSlashCommandErrorAsync(Discord.IInteractionContext context, IResult result)
     {
-        string message;
-        switch (result.Error)
+        var transaction = CreateDiscordTransaction("slash_command_error", context.Interaction.Data?.ToString() ?? "unknown");
+        try
         {
-            case InteractionCommandError.UnmetPrecondition:
-                message = $"Unmet Precondition: {result.ErrorReason}";
+            string message;
+            switch (result.Error)
+            {
+                case InteractionCommandError.UnmetPrecondition:
+                    message = $"Unmet Precondition: {result.ErrorReason}";
 
-                break;
-            case InteractionCommandError.UnknownCommand:
-                message = "Unknown command";
+                    break;
+                case InteractionCommandError.UnknownCommand:
+                    message = "Unknown command";
 
-                break;
-            case InteractionCommandError.BadArgs:
-                message = "Invalid number or arguments";
+                    break;
+                case InteractionCommandError.BadArgs:
+                    message = "Invalid number or arguments";
 
-                break;
-            case InteractionCommandError.Exception:
-                message = $"Command exception: {result.ErrorReason}";
+                    break;
+                case InteractionCommandError.Exception:
+                    message = $"Command exception: {result.ErrorReason}";
 
-                break;
-            case InteractionCommandError.Unsuccessful:
-                message = "Command could not be executed";
+                    break;
+                case InteractionCommandError.Unsuccessful:
+                    message = "Command could not be executed";
 
-                break;
-            default:
-                return;
+                    break;
+                default:
+                    transaction.Finish(SpanStatus.InternalError);
+
+                    return;
+            }
+
+            Guid errorId = Guid.NewGuid();
+
+            // Add error details to the Sentry transaction
+            transaction.SetTag("error_type", result.Error?.ToString() ?? "unknown");
+            transaction.SetTag("error_reason", message);
+
+            EmbedBuilder embedBuilder = new();
+            embedBuilder.Color = Color.Red;
+            embedBuilder.Title = "Error occurred during Command";
+            embedBuilder.Description = "While executing a command an unexpected issue occurred.";
+            embedBuilder.AddField("Error-Message", message);
+            embedBuilder.AddField("Time", DateTime.Now.ToString("O"));
+            embedBuilder.AddField("Weitere Schritte", "Bitte Kimon mit einem Screenshot kontaktieren, damit er den Fehler beheben kann c:");
+            embedBuilder.AddField("Sentry-Id", transaction.TraceId.ToString());
+            embedBuilder.Author = new EmbedAuthorBuilder().WithName("Asunara-Event-Manager");
+
+            await context.Interaction.ModifyOriginalResponseAsync(x =>
+            {
+                x.Embed = embedBuilder.Build();
+            });
+
+            transaction.Finish(SpanStatus.Ok);
         }
-
-        EmbedBuilder embedBuilder = new();
-        embedBuilder.Color = Color.Red;
-        embedBuilder.Title = "Error occurred during Command";
-        embedBuilder.Description = "While executing a command an unexpected issue occurred.";
-        embedBuilder.AddField("Error-Message", message);
-        embedBuilder.AddField("Time", DateTime.Now.ToString("O"));
-        embedBuilder.AddField("Weitere Schritte", "Bitte Kimon mit einem Screenshot kontaktieren, damit er den Fehler beheben kann c:");
-        embedBuilder.Author = new EmbedAuthorBuilder().WithName("Asunara-Event-Manager");
-
-        await context.Interaction.ModifyOriginalResponseAsync(x =>
+        catch (Exception ex)
         {
-            x.Embed = embedBuilder.Build();
-        });
+            transaction.Finish(ex);
+
+            throw;
+        }
     }
 
     private Task ClientOnLog(LogMessage arg)
@@ -268,5 +338,29 @@ public class DiscordService
             LogSeverity.Debug => LogLevel.Debug,
             _ => LogLevel.None,
         };
+    }
+
+    private ISpan CreateDiscordTransaction(string operation, string name)
+    {
+        var currentSpan = SentrySdk.GetSpan();
+        if (currentSpan != null)
+        {
+            ISpan discordTransaction = currentSpan.StartChild($"discord.{operation}", name);
+
+            SentrySdk.ConfigureScope(scope => scope.Span = discordTransaction);
+
+            return discordTransaction;
+        }
+
+        var transaction = SentrySdk.StartTransaction(
+            name,
+            $"discord.{operation}"
+        );
+
+        SentrySdk.ConfigureScope(scope => scope.Transaction = transaction);
+
+        SentrySdk.AddBreadcrumb(operation, name);
+        
+        return transaction;
     }
 }

@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Quartz;
+using Sentry.Extensions.Logging.Extensions.DependencyInjection;
 
 namespace EventManager;
 
@@ -47,6 +48,7 @@ public static class ConfigureServices
         {
             builder.AddConfiguration(configuration);
             builder.AddDebug();
+            builder.AddSentry();
         });
     }
 
@@ -91,10 +93,14 @@ public static class ConfigureServices
         services.AddMediatR(x =>
         {
             x.RegisterServicesFromAssembly(typeof(Program).Assembly);
+            
+            x.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            x.AddOpenBehavior(typeof(SentryTracingBehavior<,>));
         });
         services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(SentryTracingBehavior<,>));
     }
 
     private static void AddRepositories(this IServiceCollection services)
