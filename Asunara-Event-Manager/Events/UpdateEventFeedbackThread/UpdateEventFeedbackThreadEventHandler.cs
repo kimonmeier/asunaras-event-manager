@@ -43,7 +43,7 @@ public class UpdateEventFeedbackThreadEventHandler : IRequestHandler<UpdateEvent
             .WithColor(Color.Green)
             .WithTitle($"{@event.Name} vom {@event.Date.ToShortDateString()}")
             .WithDescription($"Dies ist das Feedback für das {@event.Name} Event was am {@event.Date.ToShortDateString()} stattgefunden hat!")
-            .AddField("Bewertung", $"{(feedbacks.Any() ? feedbacks.Average(x => x.Score) : "?")} / 5");
+            .AddField("Bewertung", $"{(feedbacks.Any() ? feedbacks.Average(x => x.Score).ToString("F") : "?")} / 5");
 
         if (@event.FeedbackMessage.HasValue)
         {
