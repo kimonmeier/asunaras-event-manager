@@ -50,7 +50,7 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
             _logger.LogDebug("Event start time: {EventStartTime}", (guildEvent?.StartTime.UtcDateTime) ?? DateTime.MinValue);
             _logger.LogDebug("Current time: {CurrentTime}", DateTime.UtcNow);
             
-            if (guildEvent.StartTime.UtcDateTime > DateTime.UtcNow.AddHours(1))
+            if (guildEvent.StartTime.UtcDateTime > DateTime.UtcNow.AddHours(1.5))
             {
                 continue;
             }
