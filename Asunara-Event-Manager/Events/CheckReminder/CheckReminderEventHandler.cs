@@ -87,6 +87,6 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
             return;
         }
 
-        await dmChannel.SendMessageAsync($"Hallöchen {socketGuild.GetUser(user.Id).DisplayName} <:MilkAndMocha_Heart:1368600961693651154>,\n\n Du hast dich für das Event **{guildEvent.Name}** angemeldet! Dieses findet **heute** um **{discordEvent.Date.FromUtc().ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/asunara?event={discordEvent.DiscordId} ||");
+        await dmChannel.SendMessageAsync($"Hallöchen {socketGuild.GetUser(user.Id).DisplayName} <:MilkAndMocha_Heart:1368600961693651154>,\n\n Du hast dich für das Event **{guildEvent.Name}** angemeldet! Dieses findet **heute** um **{discordEvent.Date.FromUtc().ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/cafemidnight?event={discordEvent.DiscordId} ||");
     }
 }
