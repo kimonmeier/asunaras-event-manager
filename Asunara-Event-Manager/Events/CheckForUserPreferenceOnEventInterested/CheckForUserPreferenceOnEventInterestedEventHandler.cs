@@ -54,7 +54,7 @@ public class CheckForUserPreferenceOnEventInterestedEventHandler : IRequestHandl
     private async Task SendMessagesAsync(IDMChannel dmChannel)
     {
         await dmChannel.SendMessageAsync(
-            "Hallöchen Freunde!\nIch darf doch Freunde sagen?\n\nIch habe gesehen, dass du dich für ein Event auf dem Asunara Discord interessierst. Um dich bei zukünftigen Events optimal zu unterstützen habe ich zwei Fragen an dich und wäre froh wenn du diese beantworten könntest!");
+            "Hallöchen Freunde!\nIch darf doch Freunde sagen?\n\nIch habe gesehen, dass du dich für ein Event auf dem Midnight Café Discord interessierst. Um dich bei zukünftigen Events optimal zu unterstützen habe ich zwei Fragen an dich und wäre froh wenn du diese beantworten könntest!");
 
         var reminderComponent = new ComponentBuilder()
             .WithButton(ButtonBuilder.CreatePrimaryButton("Ja", Konst.ButtonReminderYes, Emote.Parse(_rootConfig.Discord.Emote.Yes)))
