@@ -57,6 +57,8 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             DiscordEventId = request.Event.DiscordId,
         }, cancellationToken);
 
+        List<Task> tasks = new List<Task>();
+        
         foreach (var eventUser in users)
         {
             // Remove Participant Role
@@ -70,7 +72,7 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
                 continue;
             }
 
-            await CheckUser(request.Event, eventUser.Id);
+            tasks.Add(CheckUser(request.Event, eventUser.Id));
         }
 
         // Remove already sent
@@ -79,15 +81,23 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
 
         foreach (var eventUserId in participants)
         {
-            await CheckUser(request.Event, eventUserId);
+            tasks.Add(CheckUser(request.Event, eventUserId));
         }
+        
+        _logger.LogInformation("Started all Feedback Loops for the current Event");
+        
+        await Task.WhenAll(tasks);
+        
+        _logger.LogInformation("Finished all Feedback Loops for the current Event");
     }
 
     private async Task CheckUser(DiscordEvent discordEvent, ulong userId)
     {
+        _logger.LogInformation("Checking for User: {0}", userId);
         var userPreference = await _userPreferenceRepository.GetByDiscordAsync(userId);
         if (userPreference is null)
         {
+            _logger.LogInformation("User {UserId} has no preference", userId);
             await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
             {
                 DiscordUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(userId),
@@ -98,9 +108,11 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
 
         if (!userPreference.AllowReminderForFeedback)
         {
+            _logger.LogInformation("User {UserId} is not allowed to receive feedback reminders", userId);
             return;
         }
-
+        
+        _logger.LogInformation("Starting Feedback Loop for User {UserId}", userId);
         await StartFeedbackLoopUser(discordEvent, userId);
     }
 
@@ -111,7 +123,6 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
         if (dmChannel is null)
         {
             _logger.LogError("Could not find DMChannel for user {UserId}", userId);
-
             return;
         }
 
