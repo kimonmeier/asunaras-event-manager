@@ -46,7 +46,7 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
             .WithAuthor("Event-Manager")
             .WithColor(Color.Purple)
             .AddField("Ersteller", eventFeedback.Anonymous ? "Anonym!" : _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.DiscordUserId).DisplayName)
-            .AddField("Sterne", $"{eventFeedback.Score:F} / 5 Sternen")
+            .AddField("Sterne", $"{eventFeedback.Score:F2} / 5 Sternen")
             .AddField("Was dem User gefallen hat", FormatField(eventFeedback.Good))
             .AddField("Was dem User nicht gefallen hat", FormatField(eventFeedback.Critic))
             .AddField("Was der User verbessern würde", FormatField(eventFeedback.Suggestion))

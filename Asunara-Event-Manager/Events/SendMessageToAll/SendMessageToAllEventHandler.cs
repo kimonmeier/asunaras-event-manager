@@ -42,7 +42,5 @@ public class SendMessageToAllEventHandler : IRequestHandler<SendMessageToAllEven
             
             await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
         }
-
-
     }
 }
