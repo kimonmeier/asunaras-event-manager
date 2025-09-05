@@ -7,6 +7,7 @@ using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
+using EventManager.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
@@ -20,15 +21,17 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
     private readonly DiscordSocketClient _discordSocketClient;
     private readonly UserPreferenceRepository _userPreferenceRepository;
     private readonly RootConfig _config;
+    private readonly EventReminderService _eventReminderService;
     private readonly ILogger<CheckReminderEventHandler> _logger;
     
-    public CheckReminderEventHandler(DiscordEventRepository discordEventRepository, DiscordSocketClient discordSocketClient, RootConfig config, ILogger<CheckReminderEventHandler> logger, UserPreferenceRepository userPreferenceRepository)
+    public CheckReminderEventHandler(DiscordEventRepository discordEventRepository, DiscordSocketClient discordSocketClient, RootConfig config, ILogger<CheckReminderEventHandler> logger, UserPreferenceRepository userPreferenceRepository, EventReminderService eventReminderService)
     {
         _discordEventRepository = discordEventRepository;
         _discordSocketClient = discordSocketClient;
         _config = config;
         _logger = logger;
         _userPreferenceRepository = userPreferenceRepository;
+        _eventReminderService = eventReminderService;
     }
 
     public async Task Handle(CheckReminderEvent request, CancellationToken cancellationToken)
@@ -50,7 +53,7 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
             _logger.LogDebug("Event start time: {EventStartTime}", guildEvent!.StartTime.UtcDateTime);
             _logger.LogDebug("Current time: {CurrentTime}", DateTime.UtcNow);
             
-            if (guildEvent.StartTime.UtcDateTime > DateTime.UtcNow.AddHours(1.5))
+            if (guildEvent.StartTime.UtcDateTime > DateTime.UtcNow.AddHours(0.4))
             {
                 continue;
             }
@@ -60,11 +63,18 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
                 continue;
             }
 
+            if (_eventReminderService.HasAnnouncedEvent(discordEvent.Id))
+            {
+                continue;
+            }
+
             IEnumerable<RestUser> interestedUsers = await guildEvent.GetUsersAsync(new RequestOptions() { CancelToken = cancellationToken }).FlattenAsync();
             foreach (var user in interestedUsers)
             {
                 await SendEventReminderMessage(user, discordEvent, socketGuild, guildEvent);
             }
+            
+            _eventReminderService.AnnounceEvent(discordEvent.Id);
         }
     }
 
