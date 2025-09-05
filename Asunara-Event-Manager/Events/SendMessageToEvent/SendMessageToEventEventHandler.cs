@@ -49,7 +49,7 @@ public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEvent
         {
             UserPreference preference = (await _userPreferenceRepository.GetByDiscordAsync(user.Id))!;
 
-            if (preference is { AllowReminderForEvent: false, AllowReminderForFeedback: false })
+            if (!(preference.AllowReminderForEvent || preference.AllowReminderForFeedback))
             {
                 continue;
             }

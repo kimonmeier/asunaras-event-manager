@@ -33,7 +33,7 @@ public class SendMessageToAllEventHandler : IRequestHandler<SendMessageToAllEven
 
         foreach (UserPreference userPreference in userPreferences)
         {
-            if (userPreference is { AllowReminderForEvent: false, AllowReminderForFeedback: false })
+            if (!(userPreference.AllowReminderForEvent || userPreference.AllowReminderForFeedback))
             {
                 continue;
             }
