@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Quartz;
 using Sentry.Extensions.Logging.Extensions.DependencyInjection;
 
@@ -49,6 +50,10 @@ public static class ConfigureServices
             builder.AddConfiguration(configuration);
             builder.AddDebug();
             builder.AddSentry();
+            builder.AddSimpleConsole(x =>
+            {
+                x.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
+            });
         });
     }
 
