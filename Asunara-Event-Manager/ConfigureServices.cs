@@ -145,7 +145,7 @@ public static class ConfigureServices
             options.ScheduleJob<CheckEventReminderJob>(trigger =>
             {
                 trigger
-                    .WithSimpleSchedule(SimpleScheduleBuilder.RepeatHourlyForever().WithMisfireHandlingInstructionFireNow());
+                    .WithSimpleSchedule(SimpleScheduleBuilder.RepeatMinutelyForever(10).WithMisfireHandlingInstructionFireNow());
             });
 
         });
