@@ -126,8 +126,14 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             ;
 
 
-        await dmChannel.SendMessageAsync(
-            $"Hallöchen du hast gerade beim Event \"{discordEvent.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!",
-            components: feedbackComponent.Build());
+        try
+        {
+            await dmChannel.SendMessageAsync(
+                $"Hallöchen du hast gerade beim Event \"{discordEvent.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!",
+                components: feedbackComponent.Build());
+        } catch (Exception _)
+        {
+            _logger.LogError("The User {0} has DM's disabled!", userId);
+        }
     }
 }
