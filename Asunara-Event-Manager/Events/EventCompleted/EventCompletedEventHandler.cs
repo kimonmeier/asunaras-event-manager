@@ -35,13 +35,9 @@ public class EventCompletedEventHandler : IRequestHandler<EventCompletedEvent>
         await _discordEventRepository.UpdateAsync(@event);
         await transaction.Commit(cancellationToken);
 
-        Task eventStartFeedback = _sender.Send(new EventStartFeedbackEvent()
+        await _sender.Send(new EventStartFeedbackEvent()
         {
             Event = @event,
         }, cancellationToken);
-
-        eventStartFeedback.ConfigureAwait(false).GetAwaiter();
-        
-        _logger.LogInformation("Event completed: {0}", @event.Name);;
     }
 }
