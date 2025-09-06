@@ -10,7 +10,11 @@ public class EventParticipantService
         {
             _participants.Add(eventId, new List<ulong>());   
         }
-        
+
+        if (_participants[eventId].Contains(userId))
+        {
+            return;
+        }
         _participants[eventId].Add(userId);
     }
     
