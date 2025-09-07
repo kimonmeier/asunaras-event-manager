@@ -34,6 +34,18 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
         {
             return;
         }
+
+        var eventChannel = guild.GetEvent(@event.DiscordId).Channel;
+
+        if (eventChannel is null)
+        {
+            return;
+        }
+
+        if (request.Channel.Id != eventChannel.Id)
+        {
+            return;
+        }
         
         _eventParticipantService.AddParticipant(@event.Id, request.User.Id);
         
