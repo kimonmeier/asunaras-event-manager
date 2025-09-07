@@ -57,38 +57,42 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             DiscordEventId = request.Event.DiscordId,
         }, cancellationToken);
 
-        List<Task> tasks = new List<Task>();
-        
-        foreach (var eventUser in users)
+        Thread thread = new(async void () =>
         {
-            // Remove Participant Role
-            await guild.GetUser(eventUser.Id).RemoveRoleAsync(_config.Discord.Event.EventParticipantRoleId);
-
-            if (!_eventParticipantService.HasParticipant(request.Event.Id, eventUser.Id))
+            try
             {
-                _logger.LogInformation("User {UserId} is not a participant of event but was interested {DiscordEventName}{DiscordEventId}", eventUser.Id, request.Event.Name,
-                    request.Event.DiscordId);
+                foreach (var eventUser in users)
+                {
+                    // Remove Participant Role
+                    await guild.GetUser(eventUser.Id).RemoveRoleAsync(_config.Discord.Event.EventParticipantRoleId);
 
-                continue;
+                    if (!_eventParticipantService.HasParticipant(request.Event.Id, eventUser.Id))
+                    {
+                        _logger.LogInformation("User {UserId} is not a participant of event but was interested {DiscordEventName}{DiscordEventId}", eventUser.Id, request.Event.Name,
+                            request.Event.DiscordId);
+
+                        continue;
+                    }
+
+                    await CheckUser(request.Event, eventUser.Id);
+                }
+
+                // Remove already sent
+                List<ulong> participants = _eventParticipantService.GetParticipants(request.Event.Id);
+                participants.RemoveAll(x => users.Any(z => z.Id == x));
+
+                foreach (var eventUserId in participants)
+                {
+                    await CheckUser(request.Event, eventUserId);
+                }
             }
-
-            tasks.Add(CheckUser(request.Event, eventUser.Id));
-        }
-
-        // Remove already sent
-        List<ulong> participants = _eventParticipantService.GetParticipants(request.Event.Id);
-        participants.RemoveAll(x => users.Any(z => z.Id == x));
-
-        foreach (var eventUserId in participants)
-        {
-            tasks.Add(CheckUser(request.Event, eventUserId));
-        }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
+        });
         
-        _logger.LogInformation("Started all Feedback Loops for the current Event");
-        
-        await Task.WhenAll(tasks);
-        
-        _logger.LogInformation("Finished all Feedback Loops for the current Event");
+        thread.Start();
     }
 
     private async Task CheckUser(DiscordEvent discordEvent, ulong userId)
@@ -98,11 +102,6 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
         if (userPreference is null)
         {
             _logger.LogInformation("User {UserId} has no preference", userId);
-            await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
-            {
-                DiscordUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(userId),
-            });
-
             return;
         }
 
@@ -133,8 +132,7 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
                     .WithButton("⭐⭐⭐", $"{Konst.ButtonFeedback3Star}{Konst.PayloadDelimiter}{discordEvent.DiscordId}")
                     .WithButton("⭐⭐⭐⭐", $"{Konst.ButtonFeedback4Star}{Konst.PayloadDelimiter}{discordEvent.DiscordId}")
                     .WithButton("⭐⭐⭐⭐⭐", $"{Konst.ButtonFeedback5Star}{Konst.PayloadDelimiter}{discordEvent.DiscordId}")
-                )
-            ;
+                );
 
 
         try
@@ -142,8 +140,9 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             await dmChannel.SendMessageAsync(
                 $"Hallöchen du hast gerade beim Event \"{discordEvent.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!",
                 components: feedbackComponent.Build());
-        } catch (Exception _)
+        } catch (Exception exception)
         {
+            SentrySdk.CaptureException(exception);
             _logger.LogError("The User {0} has DM's disabled!", userId);
         }
     }

@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
+using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.CheckFskRestrictionOnUser;
 using EventManager.Models.Restrictions;
 using EventManager.Services;
@@ -35,6 +36,11 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
         }
         
         _eventParticipantService.AddParticipant(@event.Id, request.User.Id);
+        
+        await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
+        {
+            DiscordUser = request.User,
+        }, cancellationToken);
         
         var checkResult = await _sender.Send(new CheckFskRestrictionOnUserEvent()
         {
