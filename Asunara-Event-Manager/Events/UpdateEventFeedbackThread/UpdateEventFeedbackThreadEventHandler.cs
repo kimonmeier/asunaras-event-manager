@@ -59,7 +59,7 @@ public class UpdateEventFeedbackThreadEventHandler : IRequestHandler<UpdateEvent
         var message = await feedbackTextChannel.SendMessageAsync(embed: embedBuilder.Build());
         await feedbackTextChannel.CreateThreadAsync($"Feedbacks für {@event.Name}", ThreadType.PublicThread, ThreadArchiveDuration.OneWeek, message);
 
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
         @event.FeedbackMessage = message.Id;
 
         await _discordEventRepository.UpdateAsync(@event);

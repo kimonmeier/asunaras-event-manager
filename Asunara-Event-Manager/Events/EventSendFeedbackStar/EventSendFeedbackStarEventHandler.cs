@@ -30,7 +30,7 @@ public class EventSendFeedbackStarEventHandler : IRequestHandler<EventSendFeedba
             throw new Exception("Event not found");
         }
         
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
 
         EventFeedback eventFeedback = await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
         eventFeedback.Score = request.StarCount;

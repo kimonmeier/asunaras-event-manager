@@ -24,7 +24,7 @@ public class AddFSKRestrictionEventHandler : IRequestHandler<AddFSKRestrictionEv
             throw new ValidationException("Either MaxAge or MinAge must be specified");
         }
 
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
 
         await _eventRestrictionRepository.AddAsync(new FskRestrictions()
         {

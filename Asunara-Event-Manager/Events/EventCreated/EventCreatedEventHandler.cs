@@ -19,7 +19,7 @@ public class EventCreatedEventHandler : IRequestHandler<EventCreatedEvent>
 
     public async Task Handle(EventCreatedEvent request, CancellationToken cancellationToken)
     {
-        using var transaction = _dbTransactionFactory.CreateTransaction();
+        using var transaction = await _dbTransactionFactory.CreateTransaction();;
 
         await _discordEventRepository.AddAsync(new DiscordEvent()
         {

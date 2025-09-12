@@ -50,7 +50,7 @@ public class QotdPostEventHandler : IRequestHandler<QotdPostEvent>
         var qotdMessage = await channel.SendMessageAsync(string.Format(_config.Discord.Qotd.Text, qotd.Question));
         await channel.CreateThreadAsync(string.Format(_config.Discord.Qotd.ThreadTitle, DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy")), ThreadType.PublicThread, ThreadArchiveDuration.OneWeek, qotdMessage);
 
-        using var dbTransaction = _transactionFactory.CreateTransaction();
+        using var dbTransaction = await _transactionFactory.CreateTransaction();
 
         await _messageRepository.AddAsync(new QotdMessage()
         {

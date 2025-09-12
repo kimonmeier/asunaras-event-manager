@@ -26,7 +26,7 @@ public class EventFeedbackVisibilityEventHandler : IRequestHandler<EventFeedback
             throw new Exception("Event not found");
         }
         
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
         
         var eventFeedback = await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
         eventFeedback.Anonymous = request.Anonymous;

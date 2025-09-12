@@ -1,4 +1,5 @@
-﻿using EventManager.Data.Entities.Notifications;
+﻿using EFCoreSecondLevelCacheInterceptor;
+using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ public class UserPreferenceRepository : GenericRepository<UserPreference>
 
     public Task<bool> HasByDiscordAsync(ulong discordUserId)
     {
-        return Entities.AnyAsync(x => x.DiscordUserId == discordUserId);
+        return Entities.AsNoTracking().NotCacheable().AnyAsync(x => x.DiscordUserId == discordUserId);
     }
 
     public async Task<UserPreference> GetOrCreateByDiscordAsync(ulong discordId)

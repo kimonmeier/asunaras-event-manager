@@ -17,7 +17,7 @@ public class QotdDeletedEventHandler : IRequestHandler<QotdDeletedEvent>
 
     public async Task Handle(QotdDeletedEvent request, CancellationToken cancellationToken)
     {
-        var transaction = _transactionFactory.CreateTransaction();
+        var transaction = await _transactionFactory.CreateTransaction();
 
         await _repository.RemoveAsync(request.QuestionId);
 

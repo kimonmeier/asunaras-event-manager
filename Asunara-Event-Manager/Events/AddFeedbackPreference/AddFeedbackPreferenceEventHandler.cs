@@ -17,7 +17,7 @@ public class AddFeedbackPreferenceEventHandler : IRequestHandler<AddFeedbackPref
 
     public async Task Handle(AddFeedbackPreferenceEvent request, CancellationToken cancellationToken)
     {
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();
         
         var user = await _userPreferenceRepository.GetOrCreateByDiscordAsync(request.DiscordUserId);
 

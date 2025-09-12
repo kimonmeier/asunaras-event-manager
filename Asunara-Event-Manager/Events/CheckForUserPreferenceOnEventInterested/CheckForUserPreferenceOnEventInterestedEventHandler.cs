@@ -41,7 +41,7 @@ public class CheckForUserPreferenceOnEventInterestedEventHandler : IRequestHandl
     
     private async Task CreateEntity(ulong discordUserId, CancellationToken cancellationToken)
     {
-        var transaction = _transactionFactory.CreateTransaction();
+        var transaction = await _transactionFactory.CreateTransaction();
 
         await _repository.AddAsync(new UserPreference()
         {

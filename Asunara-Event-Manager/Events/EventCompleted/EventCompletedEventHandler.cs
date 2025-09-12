@@ -29,7 +29,7 @@ public class EventCompletedEventHandler : IRequestHandler<EventCompletedEvent>
             throw new Exception("Event not found");
         }
 
-        Transaction transaction = _dbTransactionFactory.CreateTransaction();
+        Transaction transaction = await _dbTransactionFactory.CreateTransaction();;
 
         @event.IsCompleted = true;
         await _discordEventRepository.UpdateAsync(@event);

@@ -29,7 +29,7 @@ public class QotdCreatedEventHandler : IRequestHandler<QotdCreatedEvent>
         
         _logger.LogInformation("Starting request");
 
-        using var transaction = _dbTransactionFactory.CreateTransaction();
+        using var transaction = await _dbTransactionFactory.CreateTransaction();;
 
         await _repository.AddAsync(new QotdQuestion()
         {

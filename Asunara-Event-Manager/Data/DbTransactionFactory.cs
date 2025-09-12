@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace EventManager.Data;
@@ -6,17 +7,21 @@ namespace EventManager.Data;
 
 public class DbTransactionFactory
 {
-    private readonly DbContext _context;
+    private readonly DbContext _dbContext;
+    private readonly DbTransactionLock _dbTransactionLock;
     private readonly ILogger<Transaction> _logger;
 
-    public DbTransactionFactory(ILogger<Transaction> logger, DbContext context)
+    public DbTransactionFactory(ILogger<Transaction> logger, DbTransactionLock dbTransactionLock, DbContext dbContext)
     {
         _logger = logger;
-        _context = context;
+        _dbTransactionLock = dbTransactionLock;
+        _dbContext = dbContext;
     }
 
-    public Transaction CreateTransaction()
+    public async Task<Transaction> CreateTransaction()
     {
-        return new Transaction(_logger, _context);
+        var ownerLock = await _dbTransactionLock.LockAsync();
+        
+        return new Transaction(_logger, _dbContext, ownerLock, _dbTransactionLock);
     }
 }

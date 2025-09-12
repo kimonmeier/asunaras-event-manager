@@ -6,14 +6,18 @@ namespace EventManager.Data;
 
 public class Transaction : IDisposable
 {
-    private DbContext _context;
     private IDbContextTransaction? _transaction;
-    private ILogger<Transaction> _logger;
+    private readonly DbContext _context;
+    private readonly ILogger<Transaction> _logger;
+    private readonly DbTransactionLock _dbTransactionLock;
+    private readonly Guid _transactionLockOwnerId;
 
-    public Transaction(ILogger<Transaction> logger, DbContext context)
+    public Transaction(ILogger<Transaction> logger, DbContext context, Guid transactionLockOwnerId, DbTransactionLock dbTransactionLock)
     {
         _logger = logger;
         _context = context;
+        _transactionLockOwnerId = transactionLockOwnerId;
+        _dbTransactionLock = dbTransactionLock;
 
         _transaction = _context.Database.BeginTransaction();
         _logger.LogDebug("Transaction {0} started", _transaction.TransactionId);
@@ -25,25 +29,36 @@ public class Transaction : IDisposable
         {
             throw new InvalidOperationException("Something went wrong, the underlying DatabaseTransaction is already closed!");
         }
+
         try
         {
-            await _context.SaveChangesAsync(cancellationToken);
-            _logger.LogDebug("Saved changes to transaction {0}", _transaction.TransactionId);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogDebug("Saved changes to transaction {0}", _transaction.TransactionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "While saving the changes to the database, an exception occured!");
+
+                throw;
+            }
+
+            try
+            {
+                await _transaction.CommitAsync(cancellationToken);
+                _logger.LogDebug("Commited Transaction {0}", _transaction.TransactionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to commit transaction {0}", _transaction.TransactionId);
+
+                throw;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            _logger.LogError(ex, "While saving the changes to the database, an exception occured!");
-            throw;
-        }
-        try
-        {
-            await _transaction.CommitAsync(cancellationToken);
-            _logger.LogDebug("Commited Transaction {0}", _transaction.TransactionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to commit transaction {0}", _transaction.TransactionId);
-            throw;
+            _dbTransactionLock.Release(_transactionLockOwnerId);
         }
 
         _transaction.Dispose();
@@ -67,5 +82,8 @@ public class Transaction : IDisposable
         {
             entry.Reload();
         }
+        
+        
+        _dbTransactionLock.Release(_transactionLockOwnerId);
     }
 }

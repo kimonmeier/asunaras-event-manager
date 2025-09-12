@@ -34,7 +34,7 @@ public class ResetUserPreferenceEventHandler : IRequestHandler<ResetUserPreferen
             return;
         }
 
-        Transaction transaction = _dbTransactionFactory.CreateTransaction();
+        Transaction transaction = await _dbTransactionFactory.CreateTransaction();;
 
         await _userPreferenceRepository.RemoveAsync(preference);
         

@@ -17,7 +17,7 @@ public class AddReminderPreferenceEventHandler : IRequestHandler<AddReminderPref
 
     public async Task Handle(AddReminderPreferenceEvent request, CancellationToken cancellationToken)
     {
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
         
         var user = await _userPreferenceRepository.GetOrCreateByDiscordAsync(request.DiscordUserId);
 

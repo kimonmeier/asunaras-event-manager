@@ -72,6 +72,7 @@ public static class ConfigureServices
             config.AddInterceptors(servicesProvider.GetRequiredService<SecondLevelCacheInterceptor>());
         });
 
+        services.AddSingleton<DbTransactionLock>();
         services.AddScoped<DbTransactionFactory>();
         services.AddScoped<DbContext>(op => op.GetRequiredService<ApplicationDbContext>());
     }

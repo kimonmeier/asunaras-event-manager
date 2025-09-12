@@ -30,7 +30,7 @@ public class EventDeletedEventHandler : IRequestHandler<EventDeletedEvent>
             return;
         }
 
-        using var dbTransaction = _dbTransactionFactory.CreateTransaction();
+        using var dbTransaction = await _dbTransactionFactory.CreateTransaction();;
         await _discordEventRepository.RemoveAsync(discordEvent);
         await dbTransaction.Commit(cancellationToken);
     }

@@ -34,7 +34,7 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
             throw new Exception("Event not found");
         }
 
-        var transaction = _dbTransactionFactory.CreateTransaction();
+        var transaction = await _dbTransactionFactory.CreateTransaction();;
 
         var eventFeedback = await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
         eventFeedback.Critic = request.Critic;
