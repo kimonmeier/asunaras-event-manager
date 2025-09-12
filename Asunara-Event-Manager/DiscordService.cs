@@ -272,18 +272,18 @@ public class DiscordService
                     break;
                 case InteractionCommandError.BadArgs:
                     message = "Invalid number or arguments";
-
+                    
                     break;
                 case InteractionCommandError.Exception:
                     message = $"Command exception: {result.ErrorReason}";
-
+                    
                     break;
                 case InteractionCommandError.Unsuccessful:
                     message = "Command could not be executed";
 
                     break;
                 default:
-                    transaction.Finish(SpanStatus.InternalError);
+                    transaction.Finish(SpanStatus.UnknownError);
 
                     return;
             }
@@ -308,8 +308,8 @@ public class DiscordService
             {
                 x.Embed = embedBuilder.Build();
             });
-
-            transaction.Finish(SpanStatus.Ok);
+            
+            transaction.Finish(SpanStatus.InternalError);
         }
         catch (Exception ex)
         {
@@ -351,6 +351,16 @@ public class DiscordService
 
             return discordTransaction;
         }
+        
+        var currentTransaction = SentrySdk.GetTransaction();
+        if (currentTransaction != null)
+        {
+            ISpan discordTransaction = currentTransaction.StartChild($"discord.{operation}", name);
+
+            SentrySdk.ConfigureScope(scope => scope.Span = discordTransaction);
+
+            return discordTransaction;
+        }
 
         var transaction = SentrySdk.StartTransaction(
             name,
@@ -358,7 +368,6 @@ public class DiscordService
         );
 
         SentrySdk.ConfigureScope(scope => scope.Transaction = transaction);
-
         SentrySdk.AddBreadcrumb(operation, name);
         
         return transaction;
