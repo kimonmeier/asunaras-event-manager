@@ -25,7 +25,7 @@ public class EventInteraction : InteractionModuleBase
         });
     }
 
-    [SlashCommand("force-feedback", "Forcet Feedback von einem User")]
+    [SlashCommand("force-feedback", "Forced Feedback von einem User")]
     public async Task ForceFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId, IUser user)
     {
         await _sender.Send(new ForceFeedbackEvent()
