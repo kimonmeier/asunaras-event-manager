@@ -22,6 +22,8 @@ public class DiscordConfig
     public Emotes Emote { get; set; } = new Emotes();
     
     public Events Event { get; set; } = new Events();
+    
+    public BirthdayConfig Birthday { get; set; } = new BirthdayConfig();
 }
 
 public class Emotes
@@ -64,4 +66,11 @@ public class FskRange
     public int? MinAge { get; set; }
     
     public int? MaxAge { get; set; }
+}
+
+public class BirthdayConfig
+{
+    public ulong ChannelId { get; set; }
+    
+    public ulong RoleId { get; set; }
 }
