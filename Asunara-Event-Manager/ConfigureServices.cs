@@ -118,6 +118,7 @@ public static class ConfigureServices
         services.AddTransient<EventRestrictionRepository>();
         services.AddTransient<UserPreferenceRepository>();
         services.AddTransient<EventFeedbackRepository>();
+        services.AddTransient<UserBirthdayRepository>();
     }
 
     private static void AddInteractions(this IServiceCollection services)
