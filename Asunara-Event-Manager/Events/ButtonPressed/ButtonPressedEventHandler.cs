@@ -61,7 +61,7 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
         }
         else
         {
-            await arg.RespondAsync(message);
+            await arg.RespondAsync(message, ephemeral: true);
         }
     }
 
