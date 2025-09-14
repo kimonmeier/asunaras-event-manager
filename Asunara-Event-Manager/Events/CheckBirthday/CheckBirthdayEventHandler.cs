@@ -69,15 +69,14 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
         StringBuilder builder = new StringBuilder();
         builder.AppendLine(string.Format(birthdayMessages[messageIndex], _config.Discord.Birthday.BirthdayChildRoleId));
-        builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
-        
-        await birthdayChannel.SendMessageAsync(builder.ToString());
-
         builder.AppendLine("Geburtstag haben:");
         foreach (var birthday in currentBirthdays)
         {
-            builder.AppendLine($"- <@{birthday.DiscordId}>");   
+            builder.AppendLine($"- <@{birthday.DiscordId}> - {birthday.Birthday.GetAge()} Jahre alt");   
         }
+        builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
+        
+        await birthdayChannel.SendMessageAsync(builder.ToString());
         
         await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString());
     }
