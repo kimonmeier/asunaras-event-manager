@@ -10,7 +10,7 @@ public class UserBirthday : IPersistentEntity
     
     public DateOnly Birthday { get; set; }
     
-    public DateOnly CreationDate { get; set; }
+    public DateTime CreationDate { get; set; }
     
     public bool IsDeleted { get; set; }
 }

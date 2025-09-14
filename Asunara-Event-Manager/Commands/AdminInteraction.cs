@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using EventManager.Events.CheckBirthday;
 using EventManager.Events.ResetUserPreference;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
@@ -47,5 +48,10 @@ public class AdminInteraction : InteractionModuleBase
             Message = message
         });
     }
-    
+
+    [SlashCommand("check-birthdays", "Führt die Logik für die Geburtstage aus")]
+    public async Task CheckBirthdays()
+    {
+        await _sender.Send(new CheckBirthdayEvent());
+    }
 }

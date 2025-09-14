@@ -155,9 +155,17 @@ public static class ConfigureServices
                     .WithSimpleSchedule(SimpleScheduleBuilder.RepeatMinutelyForever(10).WithMisfireHandlingInstructionFireNow());
             });
 
+            options.ScheduleJob<CheckBirthdayJob>(trigger =>
+            {
+                trigger
+                    .WithCronSchedule(CronScheduleBuilder.DailyAtHourAndMinute(0, 0));
+            });
+
         });
 
         services.AddTransient<QotdPostJob>();
         services.AddTransient<QotdCheckQuestionsJob>();
+        services.AddTransient<CheckEventReminderJob>();
+        services.AddTransient<CheckBirthdayJob>();
     }
 }

@@ -15,6 +15,8 @@ public class DiscordConfig
     
     public ulong EventChatId { get; set; }
     
+    public ulong HauptchatChannelId { get; set; }
+    
     public QotdConfig Qotd { get; set; } = new QotdConfig();
     
     public FskConfig Fsk { get; set; } = new FskConfig();
@@ -72,5 +74,11 @@ public class BirthdayConfig
 {
     public ulong ChannelId { get; set; }
     
-    public ulong RoleId { get; set; }
+    public ulong BirthdayChildRoleId { get; set; }
+    
+    public ulong BirthdayNotificationRoleId { get; set; }
+    
+    public ulong AnnouncementMessageId { get; set; }
+    
+    public string[] Messages { get; set; } = [];
 }

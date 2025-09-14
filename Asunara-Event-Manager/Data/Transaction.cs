@@ -59,10 +59,10 @@ public class Transaction : IDisposable
         finally
         {
             _dbTransactionLock.Release(_transactionLockOwnerId);
-        }
 
-        _transaction.Dispose();
-        _transaction = null;
+            _transaction.Dispose();
+            _transaction = null;
+        }
     }
 
     public void Dispose()

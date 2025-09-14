@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using EventManager.Events.AddFeedbackPreference;
 using EventManager.Events.AddReminderPreference;
+using EventManager.Events.BirthdayDelete;
 using EventManager.Events.EventFeedbackVisibility;
 using EventManager.Events.EventSendFeedbackStar;
 using EventManager.Events.UpdateEventFeedbackThread;
@@ -43,6 +44,11 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
         if (customId.StartsWith(Konst.ButtonFeedbackVisibilityGroup))
         {
             await HandleFeedbackVisibility(request.Context, customId, userId);
+        }
+
+        if (customId.StartsWith(Konst.ButtonBirthdayGroup))
+        {
+            await HandleBirthday(request.Context, customId, userId);
         }
     }
 
@@ -140,6 +146,7 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
                     .WithButton("Nicht Anonym!", $"{Konst.ButtonFeedbackVisibilityPublic}{Konst.PayloadDelimiter}{eventId}")
                     .Build();
             });
+
             return;
         }
 
@@ -148,7 +155,7 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
     private async Task HandleFeedbackVisibility(SocketMessageComponent arg, string customId, ulong userId)
     {
         var eventId = ulong.Parse(customId.Split([Konst.PayloadDelimiter], StringSplitOptions.None)[1]);
-        
+
         await _sender.Send(new EventFeedbackVisibilityEvent()
         {
             DiscordEventId = eventId, DiscordUserId = userId, Anonymous = customId.StartsWith(Konst.ButtonFeedbackVisibilityAnonymous)
@@ -170,5 +177,34 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
         modalBuilder.AddTextInput("Verbesserungsvorschläge", Konst.Modal.Feedback.SuggestionInputId, TextInputStyle.Paragraph, required: false);
 
         await arg.RespondWithModalAsync(modalBuilder.Build());
+    }
+
+    private async Task HandleBirthday(SocketMessageComponent arg, string customId, ulong userId)
+    {
+        switch (customId)
+        {
+            case Konst.ButtonBirthdayRegister:        
+                ModalBuilder modalBuilder = new();
+                modalBuilder.Title = "Geburtstag";
+                modalBuilder.CustomId = $"{Konst.Modal.Birthday.Id}{Konst.PayloadDelimiter}{userId}";
+                modalBuilder.AddTextInput("Tag", Konst.Modal.Birthday.DayInputId, required: true);
+                modalBuilder.AddTextInput("Monat", Konst.Modal.Birthday.MonthInputId, required: true);
+                modalBuilder.AddTextInput("Jahr", Konst.Modal.Birthday.YearInputId, required: true);
+                await arg.RespondWithModalAsync(modalBuilder.Build());
+                
+                break;
+
+            case Konst.ButtonBirthdayDelete:
+                await _sender.Send(new BirthdayDeleteEvent()
+                {
+                    DiscordUserId = userId
+                });
+
+                await SendSuccessResponse(arg, "Dein Geburtstag wurde erfolgreich gelöscht!");
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(customId), customId, null);
+        }
     }
 }

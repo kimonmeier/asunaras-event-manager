@@ -20,6 +20,7 @@ public class UserBirthdayConfiguration : IEntityTypeConfiguration<UserBirthday>
 
         builder
             .Property(x => x.CreationDate)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
         builder

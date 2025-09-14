@@ -26,9 +26,10 @@ namespace EventManager.Data.Migrations
                     b.Property<DateOnly>("Birthday")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("CreationDate")
+                    b.Property<DateTime>("CreationDate")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");

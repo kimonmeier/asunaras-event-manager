@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventManager.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250913181658_AddedUserBirthday")]
+    [Migration("20250913222806_AddedUserBirthday")]
     partial class AddedUserBirthday
     {
         /// <inheritdoc />
@@ -29,9 +29,10 @@ namespace EventManager.Data.Migrations
                     b.Property<DateOnly>("Birthday")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("CreationDate")
+                    b.Property<DateTime>("CreationDate")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<ulong>("DiscordId")
                         .HasColumnType("INTEGER");

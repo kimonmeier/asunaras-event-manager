@@ -18,7 +18,7 @@ namespace EventManager.Data.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     DiscordId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     Birthday = table.Column<DateOnly>(type: "TEXT", nullable: false),
-                    CreationDate = table.Column<DateOnly>(type: "TEXT", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     IsDeleted = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
