@@ -40,6 +40,12 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         
         var currentBirthdays = await _userBirthdayRepository.GetCurrentBirthday(DateTime.Now.Month, DateTime.Now.Day);
 
+        if (currentBirthdays.Count == 0)
+        {
+            await birthdayChannel.SendMessageAsync("Leider gibt es heute keine Geburtstage!");
+            return;
+        }
+
         foreach (var birthday in currentBirthdays)
         {
             SocketGuildUser socketGuildUser = guild.GetUser(birthday.DiscordId);
