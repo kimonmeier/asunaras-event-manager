@@ -8,10 +8,12 @@ namespace EventManager.Events.PostBirthdayMessage;
 public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessageEvent>
 {
     private readonly RootConfig _rootConfig;
+    private readonly DiscordSocketClient _client;
 
-    public PostBirthdayMessageEventHandler(RootConfig rootConfig)
+    public PostBirthdayMessageEventHandler(RootConfig rootConfig, DiscordSocketClient client)
     {
         _rootConfig = rootConfig;
+        _client = client;
     }
 
     public async Task Handle(PostBirthdayMessageEvent request, CancellationToken cancellationToken)
@@ -33,6 +35,6 @@ public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessa
                 .WithButton(" ", Konst.ButtonBirthdayDelete, ButtonStyle.Secondary, Emote.Parse(_rootConfig.Discord.Emote.No)));
 
 
-        await request.TextChannel.SendMessageAsync(embed: builder.Build(), components: componentBuilder.Build());
+        await _client.GetGuild(_rootConfig.Discord.MainDiscordServerId).GetTextChannel(request.TextChannelId).SendMessageAsync(embed: builder.Build(), components: componentBuilder.Build());
     }
 }

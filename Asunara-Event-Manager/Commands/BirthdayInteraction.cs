@@ -17,11 +17,11 @@ public class BirthdayInteraction : InteractionModuleBase
 
     
     [SlashCommand("post-message", "Postet die Nachricht für die Verwaltung der Geburtstage")]
-    public async Task PostBirthdayMessage(ITextChannel channel)
+    public async Task PostBirthdayMessage(ulong channelId)
     {
         await _sender.Send(new PostBirthdayMessageEvent()
         {
-            TextChannel = channel
+            TextChannelId = channelId
         });
     }
     
