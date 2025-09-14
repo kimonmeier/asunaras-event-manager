@@ -2,6 +2,7 @@
 using Discord;
 using Discord.WebSocket;
 using EventManager.Configuration;
+using EventManager.Data;
 using EventManager.Data.Repositories;
 using MediatR;
 
@@ -12,12 +13,14 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
     private readonly UserBirthdayRepository _userBirthdayRepository;
     private readonly DiscordSocketClient _discordSocketClient;
     private readonly RootConfig _config;
+    private readonly DbTransactionFactory _dbTransactionFactory;
     
-    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, DiscordSocketClient discordSocketClient, RootConfig config)
+    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, DiscordSocketClient discordSocketClient, RootConfig config, DbTransactionFactory dbTransactionFactory)
     {
         _userBirthdayRepository = userBirthdayRepository;
         _discordSocketClient = discordSocketClient;
         _config = config;
+        _dbTransactionFactory = dbTransactionFactory;
     }
 
     public async Task Handle(CheckBirthdayEvent request, CancellationToken cancellationToken)
@@ -49,6 +52,15 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         foreach (var birthday in currentBirthdays)
         {
             SocketGuildUser socketGuildUser = guild.GetUser(birthday.DiscordId);
+
+            if (socketGuildUser is null)
+            {
+                using var transaction = await _dbTransactionFactory.CreateTransaction();
+                await _userBirthdayRepository.DeleteByDiscordAsync(birthday.DiscordId);
+                await transaction.Commit(cancellationToken);
+                continue;
+            }
+            
             await socketGuildUser.AddRoleAsync(birthdayRole);
         }
 
@@ -60,6 +72,13 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
         
         await birthdayChannel.SendMessageAsync(builder.ToString());
+
+        builder.AppendLine("Geburtstag haben:");
+        foreach (var birthday in currentBirthdays)
+        {
+            builder.AppendLine($"- <@{birthday.DiscordId}>");   
+        }
+        
         await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString());
     }
 }
