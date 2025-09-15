@@ -4,7 +4,7 @@ using MediatR;
 
 namespace EventManager.Events.QotdSimilarQuestions;
 
-public class QotdSimilarQuestionsEventHandler : IRequestHandler<QotdSimilarQuestionsEvent, KeyValuePair<string, double>?>
+public class QotdSimilarQuestionsEventHandler : IRequestHandler<QotdSimilarQuestionsEvent, Dictionary<string, double>>
 {
     private readonly QotdQuestionRepository _qotdQuestionRepository;
 
@@ -13,12 +13,10 @@ public class QotdSimilarQuestionsEventHandler : IRequestHandler<QotdSimilarQuest
         _qotdQuestionRepository = qotdQuestionRepository;
     }
 
-    public async Task<KeyValuePair<string, double>?> Handle(QotdSimilarQuestionsEvent request, CancellationToken cancellationToken)
+    public async Task<Dictionary<string, double>> Handle(QotdSimilarQuestionsEvent request, CancellationToken cancellationToken)
     {
         List<string> questions = await _qotdQuestionRepository.GetQuestionsText();
         
-        var similarity = FuzzyComparer.GetSimilarities(request.Question, questions);
-
-        return similarity;
+        return FuzzyComparer.GetSimilarities(request.Question, questions);
     }
 }

@@ -4,7 +4,7 @@ namespace EventManager.Helper;
 
 public static class FuzzyComparer
 {
-    public static KeyValuePair<string, double>? GetSimilarities(string source, IList<string> targets, double threshold = 0.5)
+    public static Dictionary<string, double> GetSimilarities(string source, IList<string> targets, double threshold = 0.5)
     {
         ConcurrentDictionary<string, double> scores = new ConcurrentDictionary<string, double>();
 
@@ -18,12 +18,7 @@ public static class FuzzyComparer
             }
         });
 
-        if (!scores.Any())
-        {
-            return null;
-        }
-        
-        return scores.MaxBy(x => x.Value);
+        return scores.ToDictionary(x => x.Key, x => x.Value);;
     }
 
     public static double GetUnifiedSimilarity(string source, string target)

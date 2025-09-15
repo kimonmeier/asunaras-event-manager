@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Text;
+using Discord;
 using Discord.Interactions;
 using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
@@ -14,7 +15,7 @@ public class QotdInteraction : InteractionModuleBase
 {
     private readonly ISender _sender;
     private readonly ILogger<QotdInteraction> _logger;
-    
+
     public QotdInteraction(ISender sender, ILogger<QotdInteraction> logger)
     {
         _sender = sender;
@@ -26,10 +27,9 @@ public class QotdInteraction : InteractionModuleBase
     {
         await _sender.Send(new QotdCreatedEvent()
         {
-            Question = question,
-            AuthorId = Context.User.Id,
+            Question = question, AuthorId = Context.User.Id,
         });
-        
+
         await ModifyOriginalResponseAsync(x =>
         {
             x.Content = "Die Frage wurde erfolgreich erstellt";
@@ -69,19 +69,28 @@ public class QotdInteraction : InteractionModuleBase
             Question = question
         });
 
-        if (similarity == null)
+
+        if (!similarity.Any())
         {
             await ModifyOriginalResponseAsync(x =>
             {
                 x.Content = $"Es wurde keine ähnliche Frage gefunden";
             });
+
+            return;
         }
-        else
+
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine("Folgende Fragen wurde gefunden: ");
+
+        foreach (var (key, value) in similarity)
         {
-            await ModifyOriginalResponseAsync(x =>
-            {
-                x.Content = $"Die Frage \"{similarity.Value.Key}\" wurde mit einer Übereinstimmung von {(similarity.Value.Value * 100):F}% gefunden";
-            });
+            builder.AppendLine($"{key} - {(value * 100):F}%");       
         }
+        
+        await ModifyOriginalResponseAsync(x =>
+        {
+            x.Content = builder.ToString();
+        });
     }
 }
