@@ -10,5 +10,5 @@ public class BirthdayCreatedEvent : IRequest<bool>
 
     public required int Month { get; init; }
     
-    public required int Year { get; init; }
+    public required int? Year { get; init; }
 }

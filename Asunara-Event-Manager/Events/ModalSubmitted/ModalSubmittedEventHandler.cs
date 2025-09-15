@@ -76,12 +76,19 @@ public class ModalSubmittedEventHandler : IRequestHandler<ModalSubmittedEvent>
         }
 
         var yearInputString = modal.Data.Components.Single(x => x.CustomId == Konst.Modal.Birthday.YearInputId).Value;
-        if (!int.TryParse(yearInputString, out int yearInput))
+        int? yearInput = null;
+        if (!string.IsNullOrEmpty(yearInputString))
         {
-            await SendSuccessResponse(modal, "Bitte gib ein gültiges Jahr ein!");
-            return;
-        }
-        
+            if (!int.TryParse(yearInputString, out var year))
+            {
+                await SendSuccessResponse(modal, "Bitte gib ein gültiges Jahr ein!");
+
+                return;
+            }
+            
+            yearInput = year;
+        } 
+
         var success = await _sender.Send(new BirthdayCreatedEvent()
         {
             Day = dayInput, Month = monthInput, Year = yearInput, DiscordUserId = userId

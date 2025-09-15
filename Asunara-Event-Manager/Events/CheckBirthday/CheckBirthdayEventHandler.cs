@@ -72,7 +72,14 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         builder.AppendLine("Geburtstag haben:");
         foreach (var birthday in currentBirthdays)
         {
-            builder.AppendLine($"- <@{birthday.DiscordId}> - {birthday.Birthday.GetAge()} Jahre alt");   
+            if (birthday.Birthday.Year == 1)
+            {
+                builder.AppendLine($"- <@{birthday.DiscordId}> - ?? Jahre alt");   
+            }
+            else
+            {
+                builder.AppendLine($"- <@{birthday.DiscordId}> - {birthday.Birthday.GetAge()} Jahre alt");   
+            }
         }
         builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
         

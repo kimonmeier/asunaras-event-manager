@@ -189,7 +189,7 @@ public class ButtonPressedEventHandler : IRequestHandler<ButtonPressedEvent>
                 modalBuilder.CustomId = $"{Konst.Modal.Birthday.Id}{Konst.PayloadDelimiter}{userId}";
                 modalBuilder.AddTextInput("Tag", Konst.Modal.Birthday.DayInputId, required: true);
                 modalBuilder.AddTextInput("Monat", Konst.Modal.Birthday.MonthInputId, required: true);
-                modalBuilder.AddTextInput("Jahr", Konst.Modal.Birthday.YearInputId, required: true);
+                modalBuilder.AddTextInput("Jahr (Optional)", Konst.Modal.Birthday.YearInputId, required: false);
                 await arg.RespondWithModalAsync(modalBuilder.Build());
                 
                 break;

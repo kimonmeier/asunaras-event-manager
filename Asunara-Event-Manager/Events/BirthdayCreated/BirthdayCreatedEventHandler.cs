@@ -27,21 +27,25 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
     {
         try
         {
-            var birthDay = new DateOnly(request.Year, request.Month, request.Day);
+            var birthDay = new DateOnly(request.Year ?? 1, request.Month, request.Day);
 
             var age = birthDay.GetAge();
-            if (age > 60)
+            if (request.Year is not null)
             {
-                await SendMessageToEventChat($"Der User <@{request.DiscordUserId}> gibt bei seinem Geburtstag an über 60 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
+                if (age > 60)
+                {
+                    await SendMessageToEventChat($"Der User <@{request.DiscordUserId}> gibt bei seinem Geburtstag an über 60 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
 
-                return false;
-            }
+                    return false;
+                }
 
-            if (age < 16)
-            {
-                await SendMessageToEventChat($"Der User <@{request.DiscordUserId}> gibt bei seinem Geburtstag an unter 16 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
+                if (age < 16)
+                {
+                    await SendMessageToEventChat(
+                        $"Der User <@{request.DiscordUserId}> gibt bei seinem Geburtstag an unter 16 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
 
-                return false;
+                    return false;
+                }
             }
 
             bool sendHistory = await _birthdayRepository.HasByDiscord(request.DiscordUserId);
