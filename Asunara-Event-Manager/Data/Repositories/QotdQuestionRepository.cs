@@ -39,6 +39,10 @@ public class QotdQuestionRepository : GenericRepository<QotdQuestion>
             .OrderByDescending(x => x.PostedOn)
             .Select(x => x.Question)
             .FirstOrDefault();
+    }
 
+    public Task<List<string>> GetQuestionsText()
+    {
+        return Entities.Select(x => x.Question).ToListAsync();
     }
 }

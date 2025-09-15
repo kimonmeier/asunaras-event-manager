@@ -3,6 +3,7 @@ using Discord.Interactions;
 using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
 using EventManager.Events.QotdPost;
+using EventManager.Events.QotdSimilarQuestions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -59,5 +60,28 @@ public class QotdInteraction : InteractionModuleBase
             x.Content = "Es wurde eine QOTD gepostet!";
         });
     }
-    
+
+    [SlashCommand("similar", "Checkt die Übereinstimmung zu vorhandenen Fragen")]
+    public async Task CheckSimilarQuestion(string question)
+    {
+        var similarity = await _sender.Send(new QotdSimilarQuestionsEvent()
+        {
+            Question = question
+        });
+
+        if (similarity == null)
+        {
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = $"Es wurde keine ähnliche Frage gefunden";
+            });
+        }
+        else
+        {
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = $"Die Frage \"{similarity.Value.Key}\" wurde mit einer Übereinstimmung von {(similarity.Value.Value * 100):F}% gefunden";
+            });
+        }
+    }
 }
