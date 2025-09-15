@@ -36,9 +36,15 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
             await message.DeleteAsync();
         }
 
+        var comfortList = new List<ulong>();
         foreach (SocketGuildUser roleMember in birthdayRole.Members)
         {
             await roleMember.RemoveRoleAsync(birthdayRole);
+            
+            if (roleMember.Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
+            {
+                comfortList.Add(roleMember.Id);
+            }
         }
         
         var currentBirthdays = await _userBirthdayRepository.GetCurrentBirthday(DateTime.Now.Month, DateTime.Now.Day);
@@ -67,24 +73,35 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         var birthdayMessages = _config.Discord.Birthday.Messages;
         var messageIndex = Random.Shared.Next(0, birthdayMessages.Length - 1);
 
+        StringBuilder comfortBuilder = new StringBuilder();
         StringBuilder builder = new StringBuilder();
         builder.AppendLine(string.Format(birthdayMessages[messageIndex], _config.Discord.Birthday.BirthdayChildRoleId));
         builder.AppendLine("Geburtstag haben:");
+        comfortBuilder.Append(builder);
         foreach (var birthday in currentBirthdays)
         {
-            if (birthday.Birthday.Year == 1)
+            var ageString = birthday.Birthday.Year == 1
+                ? "?? Jahre alt"
+                : $"{birthday.Birthday.GetAge()} Jahre alt";
+            var line = $"- <@{birthday.DiscordId}> - {ageString}";
+
+            if (comfortList.Contains(birthday.DiscordId))
             {
-                builder.AppendLine($"- <@{birthday.DiscordId}> - ?? Jahre alt");   
+                comfortBuilder.AppendLine(line);
             }
-            else
-            {
-                builder.AppendLine($"- <@{birthday.DiscordId}> - {birthday.Birthday.GetAge()} Jahre alt");   
-            }
+
+            builder.AppendLine(line);
         }
+        comfortBuilder.AppendLine($"Lasst den Krümeln eine schöne Nachricht da!");
+        comfortBuilder.AppendLine($"|| <@&{_config.Discord.Comfort.ComfortRoleId}> ||");
         builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
         
         await birthdayChannel.SendMessageAsync(builder.ToString());
         
         await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString());
+        if (comfortList.Count != 0)
+        {
+            await guild.GetTextChannel(_config.Discord.Comfort.ChannelId).SendMessageAsync(comfortBuilder.ToString());
+        }
     }
 }

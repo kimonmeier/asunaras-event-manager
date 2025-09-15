@@ -26,6 +26,8 @@ public class DiscordConfig
     public Events Event { get; set; } = new Events();
     
     public BirthdayConfig Birthday { get; set; } = new BirthdayConfig();
+    
+    public ComfortConfig Comfort { get; set; } = new ComfortConfig();
 }
 
 public class Emotes
@@ -81,4 +83,11 @@ public class BirthdayConfig
     public ulong AnnouncementMessageId { get; set; }
     
     public string[] Messages { get; set; } = [];
+}
+
+public class ComfortConfig
+{
+    public ulong ChannelId { get; set; }
+    
+    public ulong ComfortRoleId { get; set; }
 }
