@@ -36,15 +36,9 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
             await message.DeleteAsync();
         }
 
-        var comfortList = new List<ulong>();
         foreach (SocketGuildUser roleMember in birthdayRole.Members)
         {
             await roleMember.RemoveRoleAsync(birthdayRole);
-            
-            if (roleMember.Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
-            {
-                comfortList.Add(roleMember.Id);
-            }
         }
         
         var currentBirthdays = await _userBirthdayRepository.GetCurrentBirthday(DateTime.Now.Month, DateTime.Now.Day);
@@ -78,6 +72,8 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         builder.AppendLine(string.Format(birthdayMessages[messageIndex], _config.Discord.Birthday.BirthdayChildRoleId));
         builder.AppendLine("Geburtstag haben:");
         comfortBuilder.Append(builder);
+        bool hasComfort = false;
+        
         foreach (var birthday in currentBirthdays)
         {
             var ageString = birthday.Birthday.Year == 1
@@ -85,9 +81,10 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
                 : $"{birthday.Birthday.GetAge()} Jahre alt";
             var line = $"- <@{birthday.DiscordId}> - {ageString}";
 
-            if (comfortList.Contains(birthday.DiscordId))
+            if (guild.GetUser(birthday.DiscordId).Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
             {
                 comfortBuilder.AppendLine(line);
+                hasComfort = true;
             }
 
             builder.AppendLine(line);
@@ -99,7 +96,7 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         await birthdayChannel.SendMessageAsync(builder.ToString());
         
         await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString());
-        if (comfortList.Count != 0)
+        if (hasComfort)
         {
             await guild.GetTextChannel(_config.Discord.Comfort.ChannelId).SendMessageAsync(comfortBuilder.ToString());
         }
