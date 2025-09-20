@@ -35,7 +35,7 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
 
         if (@event is null)
         {
-            DiscordEvent? futureEvent = @events.SingleOrDefault(x => x.Date - DateTime.UtcNow < TimeSpan.FromMinutes(30));
+            DiscordEvent? futureEvent = @events.FirstOrDefault(x => x.Date - DateTime.UtcNow < TimeSpan.FromMinutes(30) && guild.GetEvent(x.DiscordId).Channel.Id == request.Channel.Id);
             if (futureEvent is not null)
             {
                 _log.LogInformation("Adding user {UserId} to future event {DiscordEventId} he's {Time} to early", request.User.Id, futureEvent.DiscordId, futureEvent.Date - DateTime.UtcNow);;
