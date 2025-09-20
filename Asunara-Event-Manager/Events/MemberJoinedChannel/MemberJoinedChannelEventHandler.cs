@@ -7,6 +7,7 @@ using EventManager.Events.CheckFskRestrictionOnUser;
 using EventManager.Models.Restrictions;
 using EventManager.Services;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace EventManager.Events.MemberJoinedChannel;
 
@@ -15,12 +16,14 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly ISender _sender;
     private readonly EventParticipantService _eventParticipantService;
+    private readonly ILogger<MemberJoinedChannelEventHandler> _log;
 
-    public MemberJoinedChannelEventHandler(DiscordEventRepository discordEventRepository, ISender sender, EventParticipantService eventParticipantService)
+    public MemberJoinedChannelEventHandler(DiscordEventRepository discordEventRepository, ISender sender, EventParticipantService eventParticipantService, ILogger<MemberJoinedChannelEventHandler> log)
     {
         _discordEventRepository = discordEventRepository;
         _sender = sender;
         _eventParticipantService = eventParticipantService;
+        _log = log;
     }
 
     public async Task Handle(MemberJoinedChannelEvent request, CancellationToken cancellationToken)
@@ -32,6 +35,13 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
 
         if (@event is null)
         {
+            DiscordEvent? futureEvent = @events.SingleOrDefault(x => x.Date - DateTime.UtcNow < TimeSpan.FromMinutes(30));
+            if (futureEvent is not null)
+            {
+                _log.LogInformation("Adding user {UserId} to future event {DiscordEventId} he's {Time} to early", request.User.Id, futureEvent.DiscordId, futureEvent.Date - DateTime.UtcNow);;
+                _eventParticipantService.AddParticipant(futureEvent.Id, request.User.Id);
+            }
+            
             return;
         }
 
