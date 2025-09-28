@@ -2,7 +2,7 @@
 using EventManager.Events.AddFSKRestriction;
 using MediatR;
 
-namespace EventManager.Commands;
+namespace EventManager.Commands.Event;
 
 [Group("event-restrictions", "Commands die das Event beeinflussen")]
 public class EventRestrictionsInteraction : InteractionModuleBase

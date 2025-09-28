@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Discord;
 using Discord.Interactions;
 using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
@@ -8,7 +7,7 @@ using EventManager.Events.QotdSimilarQuestions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace EventManager.Commands;
+namespace EventManager.Commands.Qotd;
 
 [Group("qotd", "Commands für die Question of the Day")]
 public class QotdInteraction : InteractionModuleBase

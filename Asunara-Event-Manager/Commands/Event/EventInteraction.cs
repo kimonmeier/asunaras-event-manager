@@ -4,7 +4,7 @@ using EventManager.Events.AskFeedback;
 using EventManager.Events.ForceFeedback;
 using MediatR;
 
-namespace EventManager.Commands;
+namespace EventManager.Commands.Event;
 
 [Group("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten")]
 public class EventInteraction : InteractionModuleBase

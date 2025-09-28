@@ -1,9 +1,8 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using EventManager.Events.PostBirthdayMessage;
 using MediatR;
 
-namespace EventManager.Commands;
+namespace EventManager.Commands.Birthday;
 
 [Group("birthday", "Gibt die Möglichkeit die Geburtstag einzusehen")]
 public class BirthdayInteraction : InteractionModuleBase

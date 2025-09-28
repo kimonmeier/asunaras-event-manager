@@ -1,13 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
+using EventManager.Commands.Event;
 using EventManager.Events.CheckBirthday;
 using EventManager.Events.ResetUserPreference;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
 using MediatR;
-using SQLitePCL;
 
-namespace EventManager.Commands;
+namespace EventManager.Commands.Admin;
 
 [Group("admin", "Admin Commands für den ")]
 public class AdminInteraction : InteractionModuleBase

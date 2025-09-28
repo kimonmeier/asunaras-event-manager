@@ -3,11 +3,10 @@ using Discord.WebSocket;
 using EFCoreSecondLevelCacheInterceptor;
 using EventManager.Background;
 using EventManager.Behaviour;
-using EventManager.Commands;
+using EventManager.Commands.Qotd;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
-using EventManager.Events.MessageReceived;
 using EventManager.Services;
 using FluentValidation;
 using MediatR;
@@ -15,9 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Quartz;
-using Sentry.Extensions.Logging.Extensions.DependencyInjection;
 
 namespace EventManager;
 
