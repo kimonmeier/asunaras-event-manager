@@ -10,11 +10,11 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
     {
     }
 
-    public Task<ActivityEvent> GetLastVoiceActivityByDiscordId(ulong discordId)
+    public Task<ActivityEvent?> GetLastVoiceActivityByDiscordId(ulong discordId)
     {
         return Entities
             .Where(x => x.Type != ActivityType.MessageCreated)
             .Where(x => x.DiscordUserId == discordId)
-            .OrderBy(x => x.Date).FirstAsync();
+            .OrderBy(x => x.Date).FirstOrDefaultAsync();
     }
 }
