@@ -17,7 +17,7 @@ public class MemberLeftChannelEventHandler : IRequestHandler<MemberLeftChannelEv
     {
         await _sender.Send(new StopTrackingVoiceEvent()
         {
-            DiscordUserId = request.User.Id, DiscordChannelId = request.Channel.Id,
+            DiscordUser = request.User, DiscordChannel = request.Channel,
         }, cancellationToken);
         
         await _sender.Send(new CheckVoiceActivityForChannelEvent()

@@ -25,9 +25,15 @@ public class StopTrackingVoiceEventHandler : IRequestHandler<StopTrackingVoiceEv
 
     public async Task Handle(StopTrackingVoiceEvent request, CancellationToken cancellationToken)
     {
-        if (_rootConfig.Discord.Activity.ExcludedChannelsId.Contains(request.DiscordChannelId))
+        if (_rootConfig.Discord.Activity.ExcludedChannelsId.Contains(request.DiscordChannel.Id))
         {
-            _logger.LogDebug($"Die Aktivität in dem Voice-Channel {request.DiscordChannelId} ist deaktiviert!");
+            _logger.LogDebug($"Die Aktivität in dem Voice-Channel \"{request.DiscordChannel.Name}\" ist deaktiviert!");
+            return;
+        }
+
+        if (request.DiscordUser.IsBot)
+        {
+            _logger.LogDebug($"Der Nutzer \"{request.DiscordUser.Username}\" ist ein Bot!");
             return;
         }
         
@@ -35,7 +41,7 @@ public class StopTrackingVoiceEventHandler : IRequestHandler<StopTrackingVoiceEv
 
         await _activityEventRepository.AddAsync(new ActivityEvent()
         {
-            Type = ActivityType.VoiceChannelLeft, Date = DateTime.UtcNow, DiscordUserId = request.DiscordUserId, ChannelId = request.DiscordChannelId
+            Type = ActivityType.VoiceChannelLeft, Date = DateTime.UtcNow, DiscordUserId = request.DiscordUser.Id, ChannelId = request.DiscordChannel.Id
         });
         
         await transaction.Commit(cancellationToken);

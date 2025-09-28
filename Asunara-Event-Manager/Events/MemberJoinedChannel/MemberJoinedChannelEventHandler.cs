@@ -33,7 +33,7 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
     {
         await _sender.Send(new StartTrackingVoiceEvent()
         {
-            DiscordUserId = request.User.Id, DiscordChannelId = request.Channel.Id,
+            DiscordUser = request.User, DiscordChannel = request.Channel,
         }, cancellationToken);
         
         await _sender.Send(new CheckVoiceActivityForChannelEvent()
