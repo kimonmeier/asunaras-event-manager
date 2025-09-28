@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace EventManager.Configuration;
 
@@ -7,7 +8,7 @@ public class DiscordConfig
 {
     public string Token { get; set; }
     
-    public string Activity { get; set; }
+    public string ActivityPresence { get; set; }
     
     public ulong MainDiscordServerId { get; set; }
     
@@ -28,6 +29,8 @@ public class DiscordConfig
     public BirthdayConfig Birthday { get; set; } = new BirthdayConfig();
     
     public ComfortConfig Comfort { get; set; } = new ComfortConfig();
+    
+    public ActivityConfig Activity { get; set; } = new ActivityConfig();
 }
 
 public class Emotes
@@ -90,4 +93,11 @@ public class ComfortConfig
     public ulong ChannelId { get; set; }
     
     public ulong ComfortRoleId { get; set; }
+}
+
+public class ActivityConfig
+{
+    public ulong[] ExcludedChannelsId { get; set; } = [];
+
+    public string[] AllowedActivities { get; set; } = [];
 }

@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.CheckFskRestrictionOnUser;
+using EventManager.Events.CheckVoiceActivityForChannel;
+using EventManager.Events.StartTrackingVoice;
 using EventManager.Models.Restrictions;
 using EventManager.Services;
 using MediatR;
@@ -17,7 +20,7 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
     private readonly ISender _sender;
     private readonly EventParticipantService _eventParticipantService;
     private readonly ILogger<MemberJoinedChannelEventHandler> _log;
-
+    
     public MemberJoinedChannelEventHandler(DiscordEventRepository discordEventRepository, ISender sender, EventParticipantService eventParticipantService, ILogger<MemberJoinedChannelEventHandler> log)
     {
         _discordEventRepository = discordEventRepository;
@@ -28,6 +31,16 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
 
     public async Task Handle(MemberJoinedChannelEvent request, CancellationToken cancellationToken)
     {
+        await _sender.Send(new StartTrackingVoiceEvent()
+        {
+            DiscordUserId = request.User.Id, DiscordChannelId = request.Channel.Id,
+        }, cancellationToken);
+        
+        await _sender.Send(new CheckVoiceActivityForChannelEvent()
+        {
+            ChannelId = request.Channel.Id,
+        }, cancellationToken);
+        
         var guild = request.Channel.Guild;
         var events = await _discordEventRepository.GetAllUncompleted();
 

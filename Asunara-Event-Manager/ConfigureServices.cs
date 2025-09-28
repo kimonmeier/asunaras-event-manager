@@ -7,6 +7,7 @@ using EventManager.Commands;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
+using EventManager.Events.MessageReceived;
 using EventManager.Services;
 using FluentValidation;
 using MediatR;
@@ -119,6 +120,7 @@ public static class ConfigureServices
         services.AddTransient<UserPreferenceRepository>();
         services.AddTransient<EventFeedbackRepository>();
         services.AddTransient<UserBirthdayRepository>();
+        services.AddTransient<ActivityEventRepository>();
     }
 
     private static void AddInteractions(this IServiceCollection services)

@@ -21,9 +21,15 @@ using Microsoft.Extensions.Logging;
 using Quartz;
 using Sentry;
 using System;
+using System.Reactive.Concurrency;
 using System.Threading.Tasks;
+using Discord.Audio;
+using EventManager.Events.CheckVoiceActivityForChannel;
+using EventManager.Events.MemberLeftChannel;
+using EventManager.Events.MessageReceived;
 using Sentry.Protocol;
 using IResult = Discord.Interactions.IResult;
+using IScheduler = Quartz.IScheduler;
 using RunMode = Discord.Interactions.RunMode;
 
 namespace EventManager;
@@ -71,6 +77,7 @@ public class DiscordService
             _client.GuildScheduledEventCompleted += ClientOnGuildScheduledEventCompleted;
             _client.ButtonExecuted += ClientOnButtonExecuted;
             _client.ModalSubmitted += ClientOnModalSubmitted;
+            _client.MessageReceived += ClientOnMessageReceived;
 
             await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
             await _client.StartAsync();
@@ -88,7 +95,7 @@ public class DiscordService
         await scheduler.StartDelayed(TimeSpan.FromSeconds(10));
         await host.WaitForShutdownAsync();
 
-        
+
         // Create a new transaction for the shutdown process
         var shutdownTransaction = CreateDiscordTransaction("service_shutdown", "discord_service");
         try
@@ -100,81 +107,165 @@ public class DiscordService
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             shutdownTransaction.Finish(ex);
 
             throw;
         }
-        
+
         await SentrySdk.FlushAsync(TimeSpan.FromSeconds(10));
+    }
+
+    private void RunInThread(Func<Task> action, string name)
+    {
+        Thread thread = new Thread(() =>
+        {
+            _logger.LogDebug($"Starting thread for \"{name}\" with ID {Thread.CurrentThread.ManagedThreadId}");
+
+            var task = action.Invoke();
+
+            task.ConfigureAwait(true).GetAwaiter().GetResult();
+
+            _logger.LogDebug($"Finished thread for \"{name}\" with ID {Thread.CurrentThread.ManagedThreadId}");
+        });
+
+        thread.Name = name;
+        thread.Start();
+    }
+
+    private Task ClientOnMessageReceived(SocketMessage arg)
+    {
+        RunInThread(async () =>
+        {
+            await _sender.Send(new MessageReceivedEvent()
+            {
+                Message = arg
+            });
+        }, "ClientOnMessageReceived");
+
+        return Task.CompletedTask;
     }
 
     private Task ClientOnModalSubmitted(SocketModal arg)
     {
-        return _sender.Send(new ModalSubmittedEvent()
+        RunInThread(() => _sender.Send(new ModalSubmittedEvent()
         {
             ModalData = arg
-        });
+        }), nameof(DiscordService.ClientOnModalSubmitted));
+
+        return Task.CompletedTask;
     }
 
     private Task ClientOnButtonExecuted(SocketMessageComponent arg)
     {
-        return _sender.Send(new ButtonPressedEvent()
+        RunInThread(() => _sender.Send(new ButtonPressedEvent()
         {
             Context = arg
-        });
+        }), nameof(DiscordService.ClientOnButtonExecuted));
+
+        return Task.CompletedTask;
     }
 
     private Task ClientOnGuildScheduledEventCompleted(SocketGuildEvent socketEvent)
     {
-        return _sender.Send(new EventCompletedEvent()
+        RunInThread(() => _sender.Send(new EventCompletedEvent()
         {
             DiscordEventId = socketEvent.Id
-        });
+        }), nameof(DiscordService.ClientOnGuildScheduledEventCompleted));
+
+        return Task.CompletedTask;
     }
 
     private async Task ClientOnUserVoiceStateUpdated(SocketUser user, SocketVoiceState prevVoiceState, SocketVoiceState currentVoiceState)
     {
-        if (currentVoiceState.VoiceChannel is null)
-        {
-            return;
-        }
+        await Task.CompletedTask;
 
-        await _sender.Send(new MemberJoinedChannelEvent()
+        RunInThread(async () =>
         {
-            Channel = currentVoiceState.VoiceChannel, User = currentVoiceState.VoiceChannel.Guild.GetUser(user.Id),
-        });
+            if (currentVoiceState.VoiceChannel is not null && prevVoiceState.VoiceChannel is not null && currentVoiceState.VoiceChannel.Id != prevVoiceState.VoiceChannel.Id)
+            {
+                await _sender.Send(new MemberLeftChannelEvent()
+                {
+                    Channel = prevVoiceState.VoiceChannel, User = prevVoiceState.VoiceChannel.Guild.GetUser(user.Id),
+                });
+                
+                await _sender.Send(new MemberJoinedChannelEvent()
+                {
+                    Channel = currentVoiceState.VoiceChannel, User = currentVoiceState.VoiceChannel.Guild.GetUser(user.Id),
+                });
+            }
+            else if (currentVoiceState.VoiceChannel is null)
+            {
+                await _sender.Send(new MemberLeftChannelEvent()
+                {
+                    Channel = prevVoiceState.VoiceChannel, User = prevVoiceState.VoiceChannel.Guild.GetUser(user.Id),
+                });
+            }
+            else if (prevVoiceState.VoiceChannel is null)
+            {
+                await _sender.Send(new MemberJoinedChannelEvent()
+                {
+                    Channel = currentVoiceState.VoiceChannel, User = currentVoiceState.VoiceChannel.Guild.GetUser(user.Id),
+                });
+            }
+            else
+            {
+                await _sender.Send(new CheckVoiceActivityForChannelEvent()
+                {
+                    ChannelId = currentVoiceState.VoiceChannel.Id,
+                });
+            }
+
+        }, nameof(DiscordService.ClientOnUserVoiceStateUpdated));
     }
 
-    private async Task ClientOnGuildScheduledEventUserAdd(Cacheable<SocketUser, RestUser, IUser, ulong> eventUser, SocketGuildEvent @event)
+    private Task ClientOnGuildScheduledEventUserAdd(Cacheable<SocketUser, RestUser, IUser, ulong> eventUser, SocketGuildEvent @event)
     {
-        IUser user = await eventUser.GetOrDownloadAsync();
-
-        await _sender.Send(new MemberAddedEventEvent()
+        RunInThread(async () =>
         {
-            Event = @event, User = user,
-        });
+            IUser user = await eventUser.GetOrDownloadAsync();
+
+            await _sender.Send(new MemberAddedEventEvent()
+            {
+                Event = @event, User = user,
+            });
+        }, nameof(DiscordService.ClientOnGuildScheduledEventUserAdd));
+
+        return Task.CompletedTask;
     }
 
-    private async Task ClientOnJoinedGuild(SocketGuild guild)
+    private Task ClientOnJoinedGuild(SocketGuild guild)
     {
-        await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Asunara Discord und kann deswegen nicht joinen!");
-        await guild.LeaveAsync();
+        RunInThread(async () =>
+        {
+            _logger.LogWarning("Jemand hat versucht mich auf einen anderen Discord drauf zu joinen!");
+            SentrySdk.CaptureMessage($"Jemand hat versucht mich auf einen anderen Discord drauf zu joinen! {guild.Id} || {guild.Name}", SentryLevel.Warning);
+
+            await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
+            await guild.LeaveAsync();
+        }, nameof(DiscordService.ClientOnJoinedGuild));
+
+        return Task.CompletedTask;
     }
 
     private Task ClientOnGuildScheduledEventCreated(SocketGuildEvent guildEvent)
     {
-        return _sender.Send(new EventCreatedEvent()
+        RunInThread(() => _sender.Send(new EventCreatedEvent()
         {
             UtcDatum = guildEvent.StartTime.UtcDateTime, DiscordId = guildEvent.Id, EventName = guildEvent.Name
-        });
+        }), nameof(DiscordService.ClientOnGuildScheduledEventCreated));
+
+        return Task.CompletedTask;
     }
 
     private Task ClientOnGuildScheduledEventCancelled(SocketGuildEvent guildEvent)
     {
-        return _sender.Send(new EventDeletedEvent()
+        RunInThread(() => _sender.Send(new EventDeletedEvent()
         {
             DiscordId = guildEvent.Id
-        });
+        }), nameof(DiscordService.ClientOnGuildScheduledEventCancelled));
+
+        return Task.CompletedTask;
     }
 
     private async Task ClientOnReady()
@@ -183,7 +274,7 @@ public class DiscordService
         try
         {
             Game activity = new(
-                _config.Discord.Activity,
+                _config.Discord.ActivityPresence,
                 ActivityType.Watching,
                 ActivityProperties.Instance
             );
@@ -221,33 +312,41 @@ public class DiscordService
                 await HandleSlashCommandErrorAsync(context, result);
             };
 
-            _client.InteractionCreated += async interaction =>
+            _client.InteractionCreated += interaction =>
             {
-                var interactionTransaction = CreateDiscordTransaction("interaction_created", interaction.Type.ToString());
-                try
-                {
-                    _logger.LogInformation("Started interaction");
-                    var ctx = new SocketInteractionContext(_client, interaction);
-
-                    if (interaction.Type == InteractionType.ApplicationCommand)
+                RunInThread(async () =>
                     {
-                        await ctx.Interaction.DeferAsync(true);
-                    }
+                        var interactionTransaction = CreateDiscordTransaction("interaction_created", interaction.Type.ToString());
+                        try
+                        {
+                            _logger.LogInformation("Started interaction");
+                            var ctx = new SocketInteractionContext(_client, interaction);
 
-                    await interactionService.ExecuteCommandAsync(ctx, _services);
-                    interactionTransaction.Finish(SpanStatus.Ok);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error executing command");
-                    interactionTransaction.Finish(e);
-                }
+                            if (interaction.Type == InteractionType.ApplicationCommand)
+                            {
+                                await ctx.Interaction.DeferAsync(true);
+                            }
+
+                            IResult result = await interactionService.ExecuteCommandAsync(ctx, _services);
+
+                            interactionTransaction.Finish(result.IsSuccess ? SpanStatus.Ok : SpanStatus.InternalError);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e, "Error executing command");
+                            SentrySdk.CaptureException(e);
+                            interactionTransaction.Finish(e);
+                        }
+                    }, $"Executing Interaction {interaction.Type}");
+
+                return Task.CompletedTask;
             };
 
             transaction.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             transaction.Finish(ex);
 
             throw;
@@ -272,11 +371,11 @@ public class DiscordService
                     break;
                 case InteractionCommandError.BadArgs:
                     message = "Invalid number or arguments";
-                    
+
                     break;
                 case InteractionCommandError.Exception:
                     message = $"Command exception: {result.ErrorReason}";
-                    
+
                     break;
                 case InteractionCommandError.Unsuccessful:
                     message = "Command could not be executed";
@@ -308,7 +407,8 @@ public class DiscordService
             {
                 x.Embed = embedBuilder.Build();
             });
-            
+
+            SentrySdk.CaptureException(new Exception(message));
             transaction.Finish(SpanStatus.InternalError);
         }
         catch (Exception ex)
@@ -322,6 +422,11 @@ public class DiscordService
     private Task ClientOnLog(LogMessage arg)
     {
         _logger.Log(GetLogLevelByDiscordLevel(arg.Severity), arg.Exception, arg.Message);
+
+        if (arg.Exception is not null)
+        {
+            SentrySdk.CaptureException(arg.Exception);
+        }
 
         return Task.CompletedTask;
     }
@@ -351,7 +456,7 @@ public class DiscordService
 
             return discordTransaction;
         }
-        
+
         var currentTransaction = SentrySdk.GetTransaction();
         if (currentTransaction != null)
         {
@@ -369,7 +474,7 @@ public class DiscordService
 
         SentrySdk.ConfigureScope(scope => scope.Transaction = transaction);
         SentrySdk.AddBreadcrumb(operation, name);
-        
+
         return transaction;
     }
 }
