@@ -37,6 +37,14 @@ public class StopTrackingVoiceEventHandler : IRequestHandler<StopTrackingVoiceEv
             return;
         }
         
+        var lastVoiceActivity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(request.DiscordUser.Id);
+
+        if (lastVoiceActivity is null || lastVoiceActivity.Type is ActivityType.VoiceChannelLeft)
+        {
+            _logger.LogDebug($"Es gibt keine Start-Aktivität für den Nutzer \"{request.DiscordUser.Username}\"!");
+            return;
+        }
+        
         Transaction transaction = await _dbTransactionFactory.CreateTransaction();
 
         await _activityEventRepository.AddAsync(new ActivityEvent()
