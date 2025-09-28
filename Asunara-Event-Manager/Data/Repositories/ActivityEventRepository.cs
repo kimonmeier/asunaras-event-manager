@@ -15,6 +15,6 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         return Entities
             .Where(x => x.Type != ActivityType.MessageCreated)
             .Where(x => x.DiscordUserId == discordId)
-            .OrderBy(x => x.Date).FirstOrDefaultAsync();
+            .OrderByDescending(x => x.Date).FirstOrDefaultAsync();
     }
 }
