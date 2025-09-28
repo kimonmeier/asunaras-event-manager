@@ -29,6 +29,12 @@ public class MessageReceivedEventHandler : IRequestHandler<MessageReceivedEvent>
             _logger.LogDebug($"Die Activity in dem Channel {request.Message.Channel.Id} ist deaktiviert!");
             return;
         }
+
+        if (request.Message.Author.IsBot)
+        {
+            _logger.LogDebug($"Der Nutzer {request.Message.Author.Username} ist ein Bot!");
+            return;
+        }
         
         var transaction = await _dbTransactionFactory.CreateTransaction();
         
