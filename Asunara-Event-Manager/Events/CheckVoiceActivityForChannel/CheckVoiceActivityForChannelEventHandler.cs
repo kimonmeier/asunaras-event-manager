@@ -52,7 +52,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         }
 
         // If all Users are Deafened
-        if (users.All(x => x.IsSelfDeafened))
+        if (users.All(x => x.IsDeafened))
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
             return;
@@ -60,7 +60,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
         // If all Users are Muted
         if (users.All(x =>
-                x.IsSelfMuted && x.Activities.All(activity => !_rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name, StringComparer.InvariantCultureIgnoreCase))))
+                x.IsMuted && x.Activities.All(activity => !_rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name, StringComparer.InvariantCultureIgnoreCase))))
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
             return;
