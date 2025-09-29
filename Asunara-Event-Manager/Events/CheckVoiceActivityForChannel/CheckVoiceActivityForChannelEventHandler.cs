@@ -84,8 +84,13 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         foreach (var user in users)
         {
             var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(user.Id);
-            
-            if (lastEntry?.Type is not ActivityType.VoiceChannelJoined and ActivityType.VoiceChannelNonAfk)
+
+            if (lastEntry is null)
+            {
+                continue;
+            }
+
+            if (lastEntry.Type is ActivityType.VoiceChannelAfk)
             {
                 continue;
             }
