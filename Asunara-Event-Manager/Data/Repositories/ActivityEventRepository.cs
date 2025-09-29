@@ -125,6 +125,11 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             return null;
         }
 
+        if (activityEvents.All(x => x.Type != ActivityType.VoiceChannelJoined))
+        {
+            return null;
+        }
+        
         var topResult = new ActivityTopResult()
         {
             DiscordUserId = currentActivity.DiscordUserId,
