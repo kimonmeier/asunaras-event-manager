@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Discord;
 using Discord.Interactions;
 using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EventManager.Commands.Qotd;
 
+[RequireUserPermission(GuildPermission.SendPolls)]
 [Group("qotd", "Commands für die Question of the Day")]
 public class QotdInteraction : InteractionModuleBase
 {

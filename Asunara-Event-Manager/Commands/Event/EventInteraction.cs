@@ -6,6 +6,7 @@ using MediatR;
 
 namespace EventManager.Commands.Event;
 
+[RequireUserPermission(GuildPermission.SendPolls)]
 [Group("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten")]
 public class EventInteraction : InteractionModuleBase
 {

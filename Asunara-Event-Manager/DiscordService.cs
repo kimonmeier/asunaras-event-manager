@@ -300,6 +300,7 @@ public class DiscordService
             await interactionService.RegisterCommandsToGuildAsync(679367558809255938, true);
 #else
             await interactionService.RegisterCommandsToGuildAsync(_config.Discord.TeamDiscordServerId, true);
+            await interactionService.RegisterCommandsToGuildAsync(_config.Discord.MainDiscordServerId, true);
 #endif
 
             interactionService.SlashCommandExecuted += async (SlashCommandInfo commandInfo, Discord.IInteractionContext context, IResult result) =>

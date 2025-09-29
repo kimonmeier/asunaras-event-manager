@@ -9,6 +9,7 @@ using MediatR;
 
 namespace EventManager.Commands.Admin;
 
+[RequireUserPermission(GuildPermission.ViewAuditLog)]
 [Group("admin", "Admin Commands für den ")]
 public class AdminInteraction : InteractionModuleBase
 {
