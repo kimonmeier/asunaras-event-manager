@@ -71,7 +71,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             {
                 DiscordUserId = x.Key, Count = x.Count()
             })
-            .OrderBy(x => x.Count)
+            .OrderByDescending(x => x.Count)
             .Take(10)
             .ToListAsync();
     }
