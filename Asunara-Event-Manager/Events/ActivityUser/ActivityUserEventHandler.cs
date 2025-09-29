@@ -38,7 +38,7 @@ public class ActivityUserEventHandler : IRequestHandler<ActivityUserEvent>
             .WithColor(Color.Blue)
             .WithCurrentTimestamp()
             .WithTitle("Aktivität auf dem Server!")
-            .WithDescription($"Folgende Aktivität hat der User <@{request.User.Id}> gibt es auf dem Server!")
+            .WithDescription($"Folgende Aktivität hat der User <@{request.User.Id}> auf dem Server!")
             .AddField("------------------------------------------", "**Top Nachrichten**")
             .AddField("**1 Tag:**", messageCountOneDay.ToString())
             .AddField("**7 Tage:**", messageCountOneWeek.ToString())
