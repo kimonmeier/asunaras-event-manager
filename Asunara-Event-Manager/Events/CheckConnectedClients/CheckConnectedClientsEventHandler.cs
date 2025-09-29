@@ -26,13 +26,6 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
         List<ulong> channelIds = new List<ulong>();
         foreach (SocketGuildUser connectedUser in request.ConnectedUsers)
         {
-            var activity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(connectedUser.Id);
-
-            if (activity is not null && activity.Type != ActivityType.VoiceChannelLeft)
-            {
-                continue;
-            }
-
             if (!connectedUser.VoiceState.HasValue)
             {
                 continue;
@@ -43,6 +36,18 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
             if (!channelIds.Contains(voiceState.VoiceChannel.Id))
             {
                 channelIds.Add(voiceState.VoiceChannel.Id);
+            }
+            
+            var activity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(connectedUser.Id);
+
+            if (activity is null)
+            {
+                continue;
+            }
+
+            if (activity.Type == ActivityType.VoiceChannelLeft)
+            {
+                continue;
             }
             
             Transaction transaction = await _dbTransactionFactory.CreateTransaction();
