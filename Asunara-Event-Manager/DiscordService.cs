@@ -24,6 +24,7 @@ using System;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Discord.Audio;
+using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Events.MessageReceived;
@@ -78,6 +79,7 @@ public class DiscordService
             _client.ButtonExecuted += ClientOnButtonExecuted;
             _client.ModalSubmitted += ClientOnModalSubmitted;
             _client.MessageReceived += ClientOnMessageReceived;
+            _client.GuildMembersDownloaded += ClientOnGuildMembersDownloaded;
 
             await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
             await _client.StartAsync();
@@ -131,6 +133,21 @@ public class DiscordService
 
         thread.Name = name;
         thread.Start();
+    }
+    
+    private Task ClientOnGuildMembersDownloaded(SocketGuild arg)
+    {
+        RunInThread(async () =>
+        {
+            var connectedGuildUsers = arg.VoiceChannels.SelectMany(x => x.ConnectedUsers).ToList();
+
+            await _sender.Send(new CheckConnectedClientsEvent()
+            {
+                ConnectedUsers = connectedGuildUsers
+            });
+        }, nameof(DiscordService.ClientOnGuildMembersDownloaded));
+        
+        return Task.CompletedTask;
     }
 
     private Task ClientOnMessageReceived(SocketMessage arg)
