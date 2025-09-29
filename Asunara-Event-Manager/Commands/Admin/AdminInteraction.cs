@@ -2,6 +2,8 @@
 using Discord.Interactions;
 using EventManager.Commands.Event;
 using EventManager.Events.CheckBirthday;
+using EventManager.Events.CheckConnectedClients;
+using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.ResetUserPreference;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
@@ -34,19 +36,16 @@ public class AdminInteraction : InteractionModuleBase
     {
         await _sender.Send(new SendMessageToEventEvent()
         {
-            Author = Context.User,
-            DiscordEventId = Guid.Parse(eventId),
-            Message = message
+            Author = Context.User, DiscordEventId = Guid.Parse(eventId), Message = message
         });
     }
-    
+
     [SlashCommand("send-message-to-all", "Sendet eine Nachricht an alle die in der Datenbank sind")]
     public async Task SendMessageToAll(string message)
     {
         await _sender.Send(new SendMessageToAllEvent()
         {
-            Author = Context.User,
-            Message = message
+            Author = Context.User, Message = message
         });
     }
 
@@ -54,5 +53,14 @@ public class AdminInteraction : InteractionModuleBase
     public async Task CheckBirthdays()
     {
         await _sender.Send(new CheckBirthdayEvent());
+    }
+
+    [SlashCommand("force-check-activity-channel", "Führt die Logik aus um einen Channel zu checken")]
+    public async Task ForceCheckChannel(IAudioChannel channel)
+    {
+        await _sender.Send(new CheckVoiceActivityForChannelEvent()
+        {
+            ChannelId = channel.Id
+        });
     }
 }

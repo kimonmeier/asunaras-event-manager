@@ -67,7 +67,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         }
         
         // If only one User is in the Channel
-        if (users.Count == 1)
+        if (users.Count <= 1)
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
             return;
