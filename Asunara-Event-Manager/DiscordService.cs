@@ -79,7 +79,6 @@ public class DiscordService
             _client.ButtonExecuted += ClientOnButtonExecuted;
             _client.ModalSubmitted += ClientOnModalSubmitted;
             _client.MessageReceived += ClientOnMessageReceived;
-            _client.GuildMembersDownloaded += ClientOnGuildMembersDownloaded;
 
             await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
             await _client.StartAsync();
@@ -133,21 +132,6 @@ public class DiscordService
 
         thread.Name = name;
         thread.Start();
-    }
-    
-    private Task ClientOnGuildMembersDownloaded(SocketGuild arg)
-    {
-        RunInThread(async () =>
-        {
-            var connectedGuildUsers = arg.VoiceChannels.SelectMany(x => x.ConnectedUsers).ToList();
-
-            await _sender.Send(new CheckConnectedClientsEvent()
-            {
-                ConnectedUsers = connectedGuildUsers
-            });
-        }, nameof(DiscordService.ClientOnGuildMembersDownloaded));
-        
-        return Task.CompletedTask;
     }
 
     private Task ClientOnMessageReceived(SocketMessage arg)
@@ -359,6 +343,16 @@ public class DiscordService
 
                 return Task.CompletedTask;
             };
+            
+            RunInThread(async () =>
+            {
+                var connectedGuildUsers = _client.GetGuild(_config.Discord.MainDiscordServerId).VoiceChannels.SelectMany(x => x.ConnectedUsers).ToList();
+
+                await _sender.Send(new CheckConnectedClientsEvent()
+                {
+                    ConnectedUsers = connectedGuildUsers
+                });
+            }, nameof(DiscordService.ClientOnReady));
 
             transaction.Finish(SpanStatus.Ok);
         }
