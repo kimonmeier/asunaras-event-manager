@@ -66,6 +66,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         return Entities
             .AsNoTracking()
             .Where(x => x.Date >= since)
+            .Where(x => x.Type == ActivityType.MessageCreated)
             .GroupBy(x => x.DiscordUserId)
             .Select(x => new ActivityTopResult()
             {
