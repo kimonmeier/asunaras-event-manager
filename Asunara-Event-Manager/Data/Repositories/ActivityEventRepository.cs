@@ -92,6 +92,19 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         {
             List<ActivityEvent> activityEvents = new List<ActivityEvent>();
             var events = group.ToList();
+            ActivityEvent lastEvent = events.Last();
+
+            // To account for current voice time!
+            if (lastEvent.Type != ActivityType.VoiceChannelLeft)
+            {
+                events.Add(new ActivityEvent()
+                {
+                    DiscordUserId = group.Key,
+                    Type = ActivityType.VoiceChannelLeft,
+                    Date = DateTime.UtcNow
+                });
+            }
+            
             while (events.Count > 0)
             {
                 var currentActivity = events.First();
