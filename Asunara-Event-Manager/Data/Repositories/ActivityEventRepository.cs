@@ -154,7 +154,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             while (activityEvents.Any(x => x.Type == ActivityType.VoiceChannelAfk))
             {
                 ActivityEvent firstAfkEvent = activityEvents.First(x => x.Type == ActivityType.VoiceChannelAfk);
-                ActivityEvent? lastAfkEvent = activityEvents.FirstOrDefault(x => x.Type != ActivityType.VoiceChannelNonAfk);
+                ActivityEvent? lastAfkEvent = activityEvents.FirstOrDefault(x => x.Type == ActivityType.VoiceChannelNonAfk);
 
                 activityEvents.Remove(firstAfkEvent);
                 
