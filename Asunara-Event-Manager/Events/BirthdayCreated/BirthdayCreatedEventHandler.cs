@@ -73,7 +73,7 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
 
     private async Task SendMessageToEventChat(string message)
     {
-        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.EventChatId);
+        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Birthday.BirthdayTeamNotificationChannelId);
         await channel.SendMessageAsync(message);
     }
 
@@ -86,6 +86,13 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
         embedBuilder.WithDescription($"Es gab eine merkwürdige Änderung an dem Geburtstag von dem User <@{discordUserId}>");
         
         var historyByUserId = await _birthdayRepository.GetHistoryByUserId(discordUserId);
+
+        // Wenn die Leute den gleichen Geburtstag eintragen einfach ignorieren!
+        if (historyByUserId.GroupBy(x => x.Birthday).Count() <= 2)
+        {
+            return;
+        }
+        
         foreach (UserBirthday birthday in historyByUserId)
         {
             embedBuilder.AddField(birthday.CreationDate.ToString("dd.MM.yyyy HH:mm 'Uhr'"), birthday.Birthday.ToString("dd.MM.yyyy"));

@@ -79,6 +79,8 @@ public class BirthdayConfig
 {
     public ulong ChannelId { get; set; }
     
+    public ulong BirthdayTeamNotificationChannelId { get; set; }
+    
     public ulong BirthdayChildRoleId { get; set; }
     
     public ulong BirthdayNotificationRoleId { get; set; }
