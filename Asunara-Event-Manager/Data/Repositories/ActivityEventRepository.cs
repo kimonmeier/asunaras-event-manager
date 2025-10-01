@@ -33,7 +33,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
     public async Task<int> GetVoiceCountByDiscordId(ulong discordId, DateTime since, bool ignoreAfk)
     {
         await Task.CompletedTask;
-        
+
         var events = Entities
             .AsNoTracking()
             .Where(x => x.Type != ActivityType.MessageCreated)
@@ -48,7 +48,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             var currentActivity = events.First();
 
             activityEvents.Add(currentActivity);
-            
+
             ActivityTopResult? voiceActivity = ProcessVoiceActivity(currentActivity, activityEvents, ignoreAfk);
             if (voiceActivity is not null)
             {
@@ -91,19 +91,9 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         {
             List<ActivityEvent> activityEvents = new List<ActivityEvent>();
             var events = group.ToList();
-            ActivityEvent lastEvent = events.Last();
-
-            // To account for current voice time!
-            if (lastEvent.Type != ActivityType.VoiceChannelLeft)
-            {
-                events.Add(new ActivityEvent()
-                {
-                    DiscordUserId = group.Key,
-                    Type = ActivityType.VoiceChannelLeft,
-                    Date = DateTime.UtcNow
-                });
-            }
             
+            NormalizeVoiceActivityEvents(events, group.Key, since);
+
             while (events.Count > 0)
             {
                 var currentActivity = events.First();
@@ -140,7 +130,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         {
             return null;
         }
-        
+
         var topResult = new ActivityTopResult()
         {
             DiscordUserId = currentActivity.DiscordUserId,
@@ -155,13 +145,14 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
                 ActivityEvent? lastAfkEvent = activityEvents.FirstOrDefault(x => x.Type == ActivityType.VoiceChannelNonAfk);
 
                 activityEvents.Remove(firstAfkEvent);
-                
+
                 if (lastAfkEvent is null)
                 {
                     topResult.Count -= (int)currentActivity.Date.Subtract(firstAfkEvent.Date).TotalMilliseconds;
 
                     break;
                 }
+
                 activityEvents.Remove(lastAfkEvent);
 
                 topResult.Count -= (int)lastAfkEvent.Date.Subtract(firstAfkEvent.Date).TotalMilliseconds;
@@ -171,5 +162,52 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         activityEvents.Clear();
 
         return topResult;
+    }
+    
+    private static void NormalizeVoiceActivityEvents(List<ActivityEvent> events, ulong discordUserId, DateTime since)
+    {
+        ActivityEvent? beforeEvent = events
+            .Where(x => x.DiscordUserId == discordUserId)
+            .OrderBy(x => x.Date)
+            .FirstOrDefault(x => x.Date <= since);
+        
+        ActivityEvent firstEvent = events.First();
+        ActivityEvent lastEvent = events.Last();
+
+        if (beforeEvent is not null)
+        {
+            if (beforeEvent.Type == ActivityType.VoiceChannelAfk)
+            {
+                switch (firstEvent.Type)
+                {
+                    case ActivityType.VoiceChannelNonAfk:
+                        firstEvent.Type = ActivityType.VoiceChannelJoined;
+                        break;
+                    case ActivityType.VoiceChannelLeft:
+                        events.Remove(firstEvent);
+                        break;
+                }
+            }
+            else if (beforeEvent.Type != ActivityType.VoiceChannelLeft)
+            {
+                events.Insert(0, new ActivityEvent
+                {
+                    DiscordUserId = discordUserId,
+                    Date = since,
+                    Type = ActivityType.VoiceChannelJoined
+                });
+            }
+        }
+
+        // To account for current voice time!
+        if (lastEvent.Type != ActivityType.VoiceChannelLeft)
+        {
+            events.Add(new ActivityEvent
+            {
+                DiscordUserId = discordUserId,
+                Type = ActivityType.VoiceChannelLeft,
+                Date = DateTime.UtcNow
+            });
+        }
     }
 }
