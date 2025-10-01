@@ -88,7 +88,7 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
         var historyByUserId = await _birthdayRepository.GetHistoryByUserId(discordUserId);
 
         // Wenn die Leute den gleichen Geburtstag eintragen einfach ignorieren!
-        if (historyByUserId.GroupBy(x => x.Birthday).Count() <= 2)
+        if (historyByUserId.GroupBy(x => x.Birthday).Count() <= 1)
         {
             return;
         }
