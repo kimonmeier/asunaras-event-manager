@@ -40,6 +40,8 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .Where(x => x.Date >= since)
             .Where(x => x.DiscordUserId == discordId)
             .ToList();
+        
+        NormalizeVoiceActivityEvents(events, discordId, since);
 
         List<ActivityTopResult> result = new List<ActivityTopResult>();
         List<ActivityEvent> activityEvents = new List<ActivityEvent>();
