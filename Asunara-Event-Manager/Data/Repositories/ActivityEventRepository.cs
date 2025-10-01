@@ -170,7 +170,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
     {
         ActivityEvent? beforeEvent = events
             .Where(x => x.DiscordUserId == discordUserId)
-            .OrderBy(x => x.Date)
+            .OrderByDescending(x => x.Date)
             .FirstOrDefault(x => x.Date <= since);
         
         ActivityEvent firstEvent = events.First();
