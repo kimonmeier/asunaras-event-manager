@@ -73,7 +73,7 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
 
     private async Task SendMessageToEventChat(string message)
     {
-        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Birthday.BirthdayTeamNotificationChannelId);
+        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.EventChatId);
         await channel.SendMessageAsync(message);
     }
 
@@ -98,7 +98,7 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
             embedBuilder.AddField(birthday.CreationDate.ToString("dd.MM.yyyy HH:mm 'Uhr'"), birthday.Birthday.ToString("dd.MM.yyyy"));
         }
         
-        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.EventChatId);
+        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Birthday.BirthdayTeamNotificationChannelId);
         await channel.SendMessageAsync(embed: embedBuilder.Build());
     }
 }
