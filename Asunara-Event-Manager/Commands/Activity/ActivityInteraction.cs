@@ -19,12 +19,13 @@ public class ActivityInteraction : InteractionModuleBase
     }
 
     [SlashCommand("top", "Die Top-Aktivität der User")]
-    public async Task Top([Summary(description: "Ignoriere die Zeit die User AFK im Channel verbracht haben!")]bool ignoreAfk = true, DateTime? since = null)
+    public async Task Top([Summary(description: "Ignoriere die Zeit die User AFK im Channel verbracht haben!")]bool ignoreAfk = true, bool ignoreTeamMembers = true, DateTime? since = null)
     {
         await _sender.Send(new ActivityTopEvent()
         {
             Context = Context,
             IgnoreAfk = ignoreAfk,
+            IgnoreTeamMember = ignoreTeamMembers,
             Since = since ?? DateTime.MinValue,
         });
     }

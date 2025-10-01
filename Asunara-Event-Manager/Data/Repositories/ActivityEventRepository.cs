@@ -73,7 +73,6 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
                 DiscordUserId = x.Key, Count = x.Count()
             })
             .OrderByDescending(x => x.Count)
-            .Take(10)
             .ToListAsync();
     }
 
@@ -127,7 +126,6 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
                 DiscordUserId = x.Key, Count = x.Sum(y => y.Count)
             })
             .OrderByDescending(x => x.Count)
-            .Take(10)
             .ToList();
     }
 

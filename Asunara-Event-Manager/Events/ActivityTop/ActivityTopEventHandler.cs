@@ -24,8 +24,16 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         var guild = _client.GetGuild(_config.Discord.MainDiscordServerId);
         
         var topMessages = await _activityEventRepository.GetTopMessagesSince(request.Since);
-        var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since, request.IgnoreAfk ?? true);
+        var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since, request.IgnoreAfk);
 
+        if (request.IgnoreTeamMember)
+        {
+            SocketGuild socketGuild = _client.GetGuild(_config.Discord.TeamDiscordServerId);
+            
+            topMessages.RemoveAll(x => socketGuild.GetUser(x.DiscordUserId) is not null);
+            topVoices.RemoveAll(x => socketGuild.GetUser(x.DiscordUserId) is not null);
+        }
+        
         EmbedBuilder builder = new EmbedBuilder();
         builder.WithAuthor(x =>
         {
@@ -39,7 +47,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
 
         builder.AddField("------------------------------------------", "**Top Nachrichten**");
         int index = 1;
-        foreach (var topMessage in topMessages)
+        foreach (var topMessage in topMessages.Take(10))
         {
             builder.AddField($"**Top {index}** - {guild.GetUser(topMessage.DiscordUserId).Username}", $"{topMessage.Count} Nachrichten");
             index++;
@@ -47,7 +55,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         
         builder.AddField("------------------------------------------", "**Top Voice**");
         index = 1;
-        foreach (var topVoice in topVoices)
+        foreach (var topVoice in topVoices.Take(10))
         {
             builder.AddField($"**Top {index}** - {guild.GetUser(topVoice.DiscordUserId).Username}", $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden");
             index++;

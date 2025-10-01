@@ -9,5 +9,7 @@ public class ActivityTopEvent : IRequest
     
     public required DateTime Since { get; init; }
     
-    public bool? IgnoreAfk { get; init; }
+    public bool IgnoreAfk { get; init; }
+    
+    public bool IgnoreTeamMember { get; init; }
 }
