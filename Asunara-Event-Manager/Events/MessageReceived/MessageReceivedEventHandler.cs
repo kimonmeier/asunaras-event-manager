@@ -1,4 +1,5 @@
-﻿using EventManager.Configuration;
+﻿using Discord.WebSocket;
+using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Activity;
 using EventManager.Data.Repositories;
@@ -24,9 +25,12 @@ public class MessageReceivedEventHandler : IRequestHandler<MessageReceivedEvent>
 
     public async Task Handle(MessageReceivedEvent request, CancellationToken cancellationToken)
     {
-        if (_rootConfig.Discord.Activity.ExcludedChannelsId.Contains(request.Message.Channel.Id))
+        SocketGuildChannel? parentChannel = request.Message.Thread?.ParentChannel;
+
+        ulong channelIdToCheck = parentChannel?.Id ?? request.Message.Channel.Id;
+        
+        if (IsChannelExcluded(channelIdToCheck))
         {
-            _logger.LogDebug($"Die Activity in dem Channel {request.Message.Channel.Id} ist deaktiviert!");
             return;
         }
 
@@ -44,5 +48,16 @@ public class MessageReceivedEventHandler : IRequestHandler<MessageReceivedEvent>
         });
         
         await transaction.Commit(cancellationToken);
+    }
+    
+    private bool IsChannelExcluded(ulong channelId)
+    {
+        if (_rootConfig.Discord.Activity.ExcludedChannelsId.Contains(channelId))
+        {
+            _logger.LogDebug($"Die Activity in dem Channel {channelId} ist deaktiviert!");
+            return true;
+        }
+        
+        return false;
     }
 }
