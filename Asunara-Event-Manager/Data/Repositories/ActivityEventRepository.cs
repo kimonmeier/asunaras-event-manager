@@ -39,6 +39,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .Where(x => x.Type != ActivityType.MessageCreated)
             .Where(x => x.Date >= since)
             .Where(x => x.DiscordUserId == discordId)
+            .OrderByDescending(x => x.Date)
             .ToList();
         
         NormalizeVoiceActivityEvents(events, discordId, since);
@@ -86,6 +87,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .AsNoTracking()
             .Where(x => x.Type != ActivityType.MessageCreated)
             .Where(x => x.Date >= since)
+            .OrderByDescending(x => x.Date)
             .GroupBy(x => x.DiscordUserId);
 
         var result = new List<ActivityTopResult>();
