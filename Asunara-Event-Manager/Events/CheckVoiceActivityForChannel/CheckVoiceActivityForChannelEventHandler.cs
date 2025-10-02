@@ -58,7 +58,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         _logger.LogDebug("The users found are: {Muted} deafened, {SelfMuted} self deafened", users.All(x => x.IsDeafened), users.All(x => x.IsSelfDeafened));
 
         // If all Users are Deafened
-        if (users.All(x => x.IsDeafened))
+        if (users.All(x => x.IsSelfDeafened || x.IsDeafened))
         {
             _logger.LogDebug("All Users are Deafened");
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
@@ -67,7 +67,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         }
 
         // If all Users are Muted
-        if (users.All(x => x.IsMuted))
+        if (users.All(x => x.IsMuted || x.IsSelfMuted))
         {
             _logger.LogDebug("All Users are Muted");
 
