@@ -31,9 +31,10 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         if (_rootConfig.Discord.Activity.ExcludedChannelsId.Contains(request.ChannelId))
         {
             _logger.LogInformation("Channel {ChannelId} is excluded from activity tracking", request.ChannelId);
+
             return;
         }
-        
+
         SocketGuild guild = _discordSocketClient.GetGuild(_rootConfig.Discord.MainDiscordServerId);
 
         SocketGuildChannel guildChannel = guild.GetChannel(request.ChannelId);
@@ -42,7 +43,8 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         if (guildChannel is SocketStageChannel stageChannel)
         {
             users = stageChannel.ConnectedUsers.ToList();
-        } else if (guildChannel is SocketVoiceChannel voiceChannel)
+        }
+        else if (guildChannel is SocketVoiceChannel voiceChannel)
         {
             users = voiceChannel.ConnectedUsers.ToList();
         }
@@ -55,28 +57,30 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         if (users.All(x => x.IsDeafened))
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
+
             return;
         }
 
         // If all Users are Muted
-        if (users.All(x =>
-                x.IsMuted && x.Activities.All(activity => !_rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name, StringComparer.InvariantCultureIgnoreCase))))
+        if (users.All(x => x.IsMuted) && users.All(x => !x.Activities.Any(activity => _rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name))))
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
+
             return;
         }
-        
+
         // If only one User is in the Channel
         if (users.Count <= 1)
         {
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
+
             return;
         }
-        
+
         // Otherwise mark Users as active!
         await MarkUserActive(guildChannel.Id, users, cancellationToken);
     }
-    
+
     private async Task MarkUserInactive(ulong channelId, IList<SocketGuildUser> users, CancellationToken cancellationToken = default)
     {
         Transaction transaction = await _dbTransactionFactory.CreateTransaction();
@@ -100,14 +104,14 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
                 Type = ActivityType.VoiceChannelAfk, Date = DateTime.UtcNow, DiscordUserId = user.Id, ChannelId = channelId
             });
         }
-        
+
         await transaction.Commit(cancellationToken);
     }
 
     private async Task MarkUserActive(ulong channelId, IList<SocketGuildUser> users, CancellationToken cancellationToken = default)
     {
         Transaction transaction = await _dbTransactionFactory.CreateTransaction();
-        
+
         foreach (var user in users)
         {
             var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(user.Id);
@@ -116,13 +120,13 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
             {
                 continue;
             }
-            
+
             await _activityEventRepository.AddAsync(new ActivityEvent()
             {
                 Type = ActivityType.VoiceChannelNonAfk, Date = DateTime.UtcNow, DiscordUserId = user.Id, ChannelId = channelId
             });
         }
-        
+
         await transaction.Commit(cancellationToken);
     }
 }
