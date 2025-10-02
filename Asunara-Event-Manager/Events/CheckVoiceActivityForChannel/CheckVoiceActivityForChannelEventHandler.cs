@@ -53,30 +53,44 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
             throw new Exception("Unknown Channel Type");
         }
 
+        _logger.LogDebug("Found {UsersCount} Users in Channel {ChannelId}", users.Count, request.ChannelId);
+        _logger.LogDebug("The users found are: {Muted} muted, {SelfMuted} self muted", users.All(x => x.IsMuted), users.All(x => x.IsSelfMuted));
+        _logger.LogDebug("The users found are: {Muted} deafened, {SelfMuted} self deafened", users.All(x => x.IsDeafened), users.All(x => x.IsSelfDeafened));
+
         // If all Users are Deafened
         if (users.All(x => x.IsDeafened))
         {
+            _logger.LogDebug("All Users are Deafened");
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
 
             return;
         }
 
         // If all Users are Muted
-        if (users.All(x => x.IsMuted) && users.All(x => !x.Activities.Any(activity => _rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name))))
+        if (users.All(x => x.IsMuted))
         {
-            await MarkUserInactive(guildChannel.Id, users, cancellationToken);
+            _logger.LogDebug("All Users are Muted");
 
-            return;
+            if (!users.Any(x => x.Activities.Any(activity => _rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name)))) {
+                _logger.LogDebug("All Users are Muted and no activity is allowed");
+                await MarkUserInactive(guildChannel.Id, users, cancellationToken);
+
+                return;
+            }
+            
+            _logger.LogDebug("There is at least one User that is allowed to be active");
         }
 
         // If only one User is in the Channel
         if (users.Count <= 1)
         {
+            _logger.LogDebug("Only one User is in the Channel");
             await MarkUserInactive(guildChannel.Id, users, cancellationToken);
 
             return;
         }
-
+        
+        _logger.LogDebug("There are more than one User in the Channel");
         // Otherwise mark Users as active!
         await MarkUserActive(guildChannel.Id, users, cancellationToken);
     }
