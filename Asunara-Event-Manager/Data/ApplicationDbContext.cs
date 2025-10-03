@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ThreadSafe;
 
 namespace EventManager.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : ThreadSafeDbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
     
