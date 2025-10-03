@@ -123,6 +123,17 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .ToList();
     }
 
+    public Task<List<ulong>> GetUserIdsCurrentlyConnectedToVoiceChannels()
+    {
+        return Entities
+            .OrderByDescending(x => x.Date)
+            .Where(x => x.Type != ActivityType.MessageCreated)
+            .GroupBy(x => x.DiscordUserId)
+            .Where(x => x.First().Type != ActivityType.VoiceChannelLeft)
+            .Select(x => x.Key)
+            .ToListAsync();   
+    }
+
     private ActivityTopResult? ProcessVoiceActivity(ActivityEvent currentActivity, List<ActivityEvent> activityEvents, bool ignoreAfk)
     {
         if (activityEvents.Count <= 0 || currentActivity.Type != ActivityType.VoiceChannelLeft)
