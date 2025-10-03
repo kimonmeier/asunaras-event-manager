@@ -1,6 +1,6 @@
 ﻿FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS base
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apk add libsodium opus icu-libs
+RUN apk add libsodium libopus0 icu-libs
 USER $APP_UID
 WORKDIR /app
 
