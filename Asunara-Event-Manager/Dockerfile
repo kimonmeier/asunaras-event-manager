@@ -1,4 +1,5 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS base
+RUN apk add libsodium opus
 USER $APP_UID
 WORKDIR /app
 
