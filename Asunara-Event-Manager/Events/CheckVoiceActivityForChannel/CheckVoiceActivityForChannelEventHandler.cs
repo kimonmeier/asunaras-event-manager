@@ -47,10 +47,10 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         else if (guildChannel is SocketVoiceChannel voiceChannel)
         {
             users = voiceChannel.ConnectedUsers.ToList();
-        }
+        } 
         else
         {
-            throw new Exception("Unknown Channel Type");
+            throw new Exception($"Unknown Channel Type for Channel {request.ChannelId} with type {guildChannel.GetType().FullName}");
         }
 
         _logger.LogDebug("Found {UsersCount} Users in Channel {ChannelId}", users.Count, request.ChannelId);

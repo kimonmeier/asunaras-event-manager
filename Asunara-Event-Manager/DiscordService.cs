@@ -88,6 +88,7 @@ public class DiscordService
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             transaction.Finish(ex);
 
             throw;
@@ -122,10 +123,19 @@ public class DiscordService
         Thread thread = new Thread(() =>
         {
             _logger.LogDebug($"Starting thread for \"{name}\" with ID {Thread.CurrentThread.ManagedThreadId}");
+            try
+            {
+                var task = action.Invoke();
 
-            var task = action.Invoke();
+                task.ConfigureAwait(true).GetAwaiter().GetResult();
 
-            task.ConfigureAwait(true).GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+
+                throw;
+            }
 
             _logger.LogDebug($"Finished thread for \"{name}\" with ID {Thread.CurrentThread.ManagedThreadId}");
         });
@@ -425,6 +435,7 @@ public class DiscordService
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             transaction.Finish(ex);
 
             throw;
