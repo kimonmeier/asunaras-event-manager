@@ -5,6 +5,7 @@ using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace EventManager.Events.CheckBirthday;
 
@@ -14,13 +15,15 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
     private readonly DiscordSocketClient _discordSocketClient;
     private readonly RootConfig _config;
     private readonly DbTransactionFactory _dbTransactionFactory;
-    
-    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, DiscordSocketClient discordSocketClient, RootConfig config, DbTransactionFactory dbTransactionFactory)
+    private readonly ILogger<CheckBirthdayEventHandler> _logger;
+
+    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, DiscordSocketClient discordSocketClient, RootConfig config, DbTransactionFactory dbTransactionFactory, ILogger<CheckBirthdayEventHandler> logger)
     {
         _userBirthdayRepository = userBirthdayRepository;
         _discordSocketClient = discordSocketClient;
         _config = config;
         _dbTransactionFactory = dbTransactionFactory;
+        _logger = logger;
     }
 
     public async Task Handle(CheckBirthdayEvent request, CancellationToken cancellationToken)
@@ -81,7 +84,15 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
                 : $"{birthday.Birthday.GetAge()} Jahre alt";
             var line = $"- <@{birthday.DiscordId}> - {ageString}";
 
-            if (guild.GetUser(birthday.DiscordId).Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
+            SocketGuildUser? socketGuildUser = guild.GetUser(birthday.DiscordId);
+
+            if (socketGuildUser is null)
+            {
+                _logger.LogWarning("Could not find user for discord id {DiscordId}", birthday.DiscordId);
+                continue;
+            }
+            
+            if (socketGuildUser.Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
             {
                 comfortBuilder.AppendLine(line);
                 hasComfort = true;
