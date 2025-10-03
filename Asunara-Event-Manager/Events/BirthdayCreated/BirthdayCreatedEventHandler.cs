@@ -35,16 +35,12 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
                 if (age > 60)
                 {
                     await SendMessageToEventChat($"Der User <@{request.DiscordUserId}> ({request.DiscordUserId}) gibt bei seinem Geburtstag an über 60 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
-
-                    return false;
                 }
 
                 if (age < 16)
                 {
                     await SendMessageToEventChat(
                         $"Der User <@{request.DiscordUserId}> ({request.DiscordUserId}) gibt bei seinem Geburtstag an unter 16 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
-
-                    return false;
                 }
             }
 
