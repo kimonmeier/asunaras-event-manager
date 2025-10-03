@@ -1,5 +1,7 @@
 ﻿using Discord;
+using Discord.Audio;
 using Discord.Interactions;
+using Discord.WebSocket;
 using EventManager.Commands.Event;
 using EventManager.Events.CheckBirthday;
 using EventManager.Events.CheckConnectedClients;
@@ -8,6 +10,7 @@ using EventManager.Events.ResetUserPreference;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
 using EventManager.Events.ThrowException;
+using EventManager.Services;
 using MediatR;
 
 namespace EventManager.Commands.Admin;
@@ -17,10 +20,12 @@ namespace EventManager.Commands.Admin;
 public class AdminInteraction : InteractionModuleBase
 {
     private readonly ISender _sender;
+    private readonly AudioService _audioService;
 
-    public AdminInteraction(ISender sender)
+    public AdminInteraction(ISender sender, AudioService audioService)
     {
         _sender = sender;
+        _audioService = audioService;
     }
 
     [SlashCommand("reset-user-preference", "Entfernt die User Preference")]
@@ -76,6 +81,17 @@ public class AdminInteraction : InteractionModuleBase
         {
             throw new Exception("Test Exception");
         }
-        
+    }
+
+    [SlashCommand("connect-to-voice", "Connects to a voice channel")]
+    public async Task ConnectToVoice(SocketVoiceChannel channel)
+    {
+        await _audioService.ConnectToVoiceChannelAsync(channel);
+    }
+    
+    [SlashCommand("disconnect-from-voice", "Disconnects from a voice channel")]
+    public async Task DisconnectFromVoice()
+    {
+        await _audioService.DisconnectFromVoiceChannelAsync();
     }
 }

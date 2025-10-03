@@ -91,6 +91,7 @@ public static class ConfigureServices
         services.AddSingleton<DiscordService>();
         services.AddSingleton<EventParticipantService>();
         services.AddSingleton<EventReminderService>();
+        services.AddSingleton<AudioService>();
     }
 
     private static void AddPipeline(this IServiceCollection services)
