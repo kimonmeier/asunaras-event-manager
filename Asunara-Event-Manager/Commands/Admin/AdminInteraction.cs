@@ -7,6 +7,7 @@ using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.ResetUserPreference;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
+using EventManager.Events.ThrowException;
 using MediatR;
 
 namespace EventManager.Commands.Admin;
@@ -62,5 +63,19 @@ public class AdminInteraction : InteractionModuleBase
         {
             ChannelId = channel.Id
         });
+    }
+
+    [SlashCommand("force-exception", "Forced eine Exception für Sentry")]
+    public async Task ForceException(bool withMediator)
+    {
+        if (withMediator)
+        {
+            await _sender.Send(new ThrowExceptionEvent());
+        }
+        else
+        {
+            throw new Exception("Test Exception");
+        }
+        
     }
 }

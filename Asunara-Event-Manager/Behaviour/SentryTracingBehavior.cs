@@ -45,6 +45,7 @@ public class SentryTracingBehavior<TRequest, TResponse>: IPipelineBehavior<TRequ
         catch (Exception e)
         {
             // If an exception occurs, finish the transaction with an error status
+            SentrySdk.CaptureException(e);
             transaction.Finish(e);
             
             // Re-throw the exception to not swallow it
@@ -74,6 +75,7 @@ public class SentryTracingBehavior<TRequest, TResponse>: IPipelineBehavior<TRequ
         catch (Exception e)
         {
             // If an exception occurs, finish the child span with an error status
+            SentrySdk.CaptureException(e);
             childSpan.Finish(e);
                 
             // Re-throw the exception to not swallow it

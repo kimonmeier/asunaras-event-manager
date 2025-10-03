@@ -14,8 +14,11 @@ public static class SentryService
             x.SampleRate = config.Sentry.SampleRate;
             x.TracesSampleRate = config.Sentry.TraceSampleRate;
             x.ProfilesSampleRate = config.Sentry.ProfilingSampleRate;
+
+#if DEBUG
+            x.Debug = true;
+#endif
             
-            x.AddProfilingIntegration();
             x.AddDiagnosticSourceIntegration();
         });
     }
