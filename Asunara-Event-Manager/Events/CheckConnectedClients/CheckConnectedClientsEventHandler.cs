@@ -46,7 +46,12 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
             
             var activity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(connectedUser.Id);
 
-            if (activity is not null && activity.Type == ActivityType.VoiceChannelLeft)
+            if (activity is null)
+            {
+                continue;           
+            }
+            
+            if (activity.Type != ActivityType.VoiceChannelLeft && activity.ChannelId == voiceState.VoiceChannel.Id)
             {
                 continue;
             }
