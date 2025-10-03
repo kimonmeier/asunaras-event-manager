@@ -39,6 +39,12 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
         SocketGuildChannel guildChannel = guild.GetChannel(request.ChannelId);
 
+        if (guildChannel is null)
+        {
+            _logger.LogWarning("Could not find channel with id {ChannelId}", request.ChannelId);
+            return;
+        }
+        
         List<SocketGuildUser> users;
         if (guildChannel is SocketStageChannel stageChannel)
         {
