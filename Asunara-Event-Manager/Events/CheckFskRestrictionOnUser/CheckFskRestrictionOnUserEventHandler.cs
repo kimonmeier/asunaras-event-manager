@@ -1,6 +1,8 @@
 ﻿using Discord.WebSocket;
 using EventManager.Configuration;
+using EventManager.Data.Entities.Birthday;
 using EventManager.Data.Entities.Restrictions;
+using EventManager.Data.Repositories;
 using EventManager.Models.Restrictions;
 using MediatR;
 
@@ -10,11 +12,13 @@ public class CheckFskRestrictionOnUserEventHandler : IRequestHandler<CheckFskRes
 {
     private readonly DiscordSocketClient _client;
     private readonly RootConfig _config;
+    private readonly UserBirthdayRepository _userBirthdayRepository;
 
-    public CheckFskRestrictionOnUserEventHandler(DiscordSocketClient client, RootConfig config)
+    public CheckFskRestrictionOnUserEventHandler(DiscordSocketClient client, RootConfig config, UserBirthdayRepository userBirthdayRepository)
     {
         _client = client;
         _config = config;
+        _userBirthdayRepository = userBirthdayRepository;
     }
 
     public async Task<RestrictionCheckResult> Handle(CheckFskRestrictionOnUserEvent request, CancellationToken cancellationToken)
@@ -31,6 +35,21 @@ public class CheckFskRestrictionOnUserEventHandler : IRequestHandler<CheckFskRes
         if (range is null)
         {
             return new RestrictionCheckResult(false, "Du hast leider kein Alter angegeben!");
+        }
+
+        UserBirthday? userBirthday = await _userBirthdayRepository.GetByDiscordAsync(request.User.Id);
+
+        if (userBirthday is not null && userBirthday.Birthday.Year != 1)
+        {
+            if (fskRestriction.MaxAlter is not null && fskRestriction.MaxAlter < userBirthday.Birthday.GetAge())
+            {
+                return new RestrictionCheckResult(false, $"Du bist leider zu Alt für das Event! Das Maximalalter für das Event beträgt {fskRestriction.MaxAlter} Jahre");
+            }
+
+            if (fskRestriction.MinAlter is not null && fskRestriction.MinAlter > userBirthday.Birthday.GetAge())
+            {
+                return new RestrictionCheckResult(false, $"Du bist leider zu Jung für das Event! Das Mindestalter für das Event beträgt {fskRestriction.MinAlter} Jahre");
+            }
         }
 
         if (fskRestriction.MaxAlter is not null)
