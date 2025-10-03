@@ -48,7 +48,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         List<ActivityEvent> activityEvents = new List<ActivityEvent>();
         while (events.Count > 0)
         {
-            var currentActivity = events.First();
+            var currentActivity = events.Last();
 
             activityEvents.Add(currentActivity);
 
@@ -162,15 +162,15 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         var topResult = new ActivityTopResult()
         {
             DiscordUserId = currentActivity.DiscordUserId,
-            Count = (int)currentActivity.Date.Subtract(activityEvents.First(x => x.Type == ActivityType.VoiceChannelJoined).Date).TotalMilliseconds
+            Count = (int)currentActivity.Date.Subtract(activityEvents.Last(x => x.Type == ActivityType.VoiceChannelJoined).Date).TotalMilliseconds
         };
 
         if (ignoreAfk)
         {
             while (activityEvents.Any(x => x.Type == ActivityType.VoiceChannelAfk))
             {
-                ActivityEvent firstAfkEvent = activityEvents.First(x => x.Type == ActivityType.VoiceChannelAfk);
-                ActivityEvent? lastAfkEvent = activityEvents.FirstOrDefault(x => x.Type == ActivityType.VoiceChannelNonAfk);
+                ActivityEvent firstAfkEvent = activityEvents.Last(x => x.Type == ActivityType.VoiceChannelAfk);
+                ActivityEvent? lastAfkEvent = activityEvents.LastOrDefault(x => x.Type == ActivityType.VoiceChannelNonAfk);
 
                 activityEvents.Remove(firstAfkEvent);
 
@@ -206,19 +206,19 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         {
             if (beforeEvent.Type == ActivityType.VoiceChannelAfk)
             {
-                switch (firstEvent.Type)
+                switch (lastEvent.Type)
                 {
                     case ActivityType.VoiceChannelNonAfk:
-                        firstEvent.Type = ActivityType.VoiceChannelJoined;
+                        lastEvent.Type = ActivityType.VoiceChannelJoined;
                         break;
                     case ActivityType.VoiceChannelLeft:
-                        events.Remove(firstEvent);
+                        events.Remove(lastEvent);
                         break;
                 }
             }
             else if (beforeEvent.Type != ActivityType.VoiceChannelLeft)
             {
-                events.Insert(0, new ActivityEvent
+                events.Add(new ActivityEvent
                 {
                     DiscordUserId = discordUserId,
                     Date = since,
@@ -228,9 +228,9 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         }
 
         // To account for current voice time!
-        if (lastEvent.Type != ActivityType.VoiceChannelLeft)
+        if (firstEvent.Type != ActivityType.VoiceChannelLeft)
         {
-            events.Add(new ActivityEvent
+            events.Insert(0, new ActivityEvent
             {
                 DiscordUserId = discordUserId,
                 Type = ActivityType.VoiceChannelLeft,
