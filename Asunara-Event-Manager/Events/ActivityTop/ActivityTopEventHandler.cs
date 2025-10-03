@@ -49,7 +49,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         int index = 1;
         foreach (var topMessage in topMessages.Take(10))
         {
-            builder.AddField($"**Top {index}** - {guild.GetUser(topMessage.DiscordUserId).Username}", $"{topMessage.Count} Nachrichten");
+            builder.AddField($"**Top {index}** - {guild.GetUser(topMessage.DiscordUserId)?.Username}", $"{topMessage.Count} Nachrichten");
             index++;
         }
         
@@ -57,7 +57,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         index = 1;
         foreach (var topVoice in topVoices.Take(10))
         {
-            builder.AddField($"**Top {index}** - {guild.GetUser(topVoice.DiscordUserId).Username}", $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden");
+            builder.AddField($"**Top {index}** - {guild.GetUser(topVoice.DiscordUserId)?.Username}", $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden");
             index++;
         }
         
