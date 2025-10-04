@@ -94,4 +94,10 @@ public class AdminInteraction : InteractionModuleBase
     {
         await _audioService.DisconnectFromVoiceChannelAsync();
     }
+
+    [SlashCommand("play-sound", "Plays a sound")]
+    public async Task PlaySound(string url)
+    {
+        await _audioService.PlayAudioAsync(url);
+    }
 }
