@@ -1,6 +1,6 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS base
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apk add libsodium opus-tools icu-libs
+﻿FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
+RUN apt-get update
+RUN apt-get -y install opus-tools
 USER $APP_UID
 WORKDIR /app
 
