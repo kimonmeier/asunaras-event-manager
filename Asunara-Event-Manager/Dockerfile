@@ -1,7 +1,9 @@
 ﻿FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
-RUN apt-get update && apt-get install -y libopus0
-USER $APP_UID
 WORKDIR /app
+RUN apt-get update && \
+    apt-get install -y libopus0 && \
+    ln -s /usr/lib/x86_64-linux-gnu/libopus.so.0 /app/libopus.so
+USER $APP_UID
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
