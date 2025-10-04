@@ -1,6 +1,5 @@
 ﻿FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
-RUN apt-get update
-RUN apt-get -y install opus-tools
+RUN apt-get update && apt-get install -y libopus0
 USER $APP_UID
 WORKDIR /app
 
