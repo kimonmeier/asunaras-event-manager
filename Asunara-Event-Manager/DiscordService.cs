@@ -252,7 +252,15 @@ public class DiscordService
             _logger.LogWarning("Jemand hat versucht mich auf einen anderen Discord drauf zu joinen!");
             SentrySdk.CaptureMessage($"Jemand hat versucht mich auf einen anderen Discord drauf zu joinen! {guild.Id} || {guild.Name}", SentryLevel.Warning);
 
-            await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
+            try
+            {
+                await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning("The owner of the guild could not be contacted!");
+            }
+
             await guild.LeaveAsync();
         }, nameof(DiscordService.ClientOnJoinedGuild));
 
