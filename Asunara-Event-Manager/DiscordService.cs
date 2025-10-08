@@ -371,6 +371,21 @@ public class DiscordService
                     ConnectedUsers = connectedGuildUsers
                 });
             }, nameof(DiscordService.ClientOnReady));
+            
+            RunInThread(async () =>
+            {
+                var guilds = _client.Guilds.ToList();
+                
+                guilds.RemoveAll(x => x.Id == _config.Discord.MainDiscordServerId);
+                guilds.RemoveAll(x => x.Id == _config.Discord.TeamDiscordServerId);
+
+                foreach (SocketGuild socketGuild in guilds)
+                {
+                    _logger.LogWarning("Guild {GuildName} ({GuildId}) is not in the config.json. Leaving it...", socketGuild.Name, socketGuild.Id);
+                    SentrySdk.CaptureMessage($"Guild {socketGuild.Name} ({socketGuild.Id}) is not in the config.json. Leaving it...", SentryLevel.Warning);
+                    await socketGuild.LeaveAsync();
+                }
+            }, "Checking for Guilds");
 
             transaction.Finish(SpanStatus.Ok);
         }
