@@ -464,10 +464,9 @@ public class DiscordService
         }
         catch (Exception e)
         {
-            _logger.LogWarning("The owner of the guild could not be contacted!");
+            _logger.LogInformation("The owner of the guild could not be contacted!");
         }
         
-        _logger.LogWarning("Guild {GuildName} ({GuildId}) is not in the config.json. Leaving it...", guild.Name, guild.Id);
         SentrySdk.CaptureMessage($"Guild {guild.Name} ({guild.Id}) is not in the config.json. Leaving it...", SentryLevel.Warning);
         await guild.LeaveAsync();
     }
