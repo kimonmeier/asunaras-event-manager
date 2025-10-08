@@ -104,9 +104,6 @@ public static class ConfigureServices
             x.AddOpenBehavior(typeof(SentryTracingBehavior<,>));
         });
         services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(SentryTracingBehavior<,>));
     }
 
     private static void AddRepositories(this IServiceCollection services)
