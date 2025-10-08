@@ -249,19 +249,7 @@ public class DiscordService
     {
         RunInThread(async () =>
         {
-            _logger.LogWarning("Jemand hat versucht mich auf einen anderen Discord drauf zu joinen!");
-            SentrySdk.CaptureMessage($"Jemand hat versucht mich auf einen anderen Discord drauf zu joinen! {guild.Id} || {guild.Name}", SentryLevel.Warning);
-
-            try
-            {
-                await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning("The owner of the guild could not be contacted!");
-            }
-
-            await guild.LeaveAsync();
+            await LeaveWrongGuild(guild);
         }, nameof(DiscordService.ClientOnJoinedGuild));
 
         return Task.CompletedTask;
@@ -381,9 +369,7 @@ public class DiscordService
 
                 foreach (SocketGuild socketGuild in guilds)
                 {
-                    _logger.LogWarning("Guild {GuildName} ({GuildId}) is not in the config.json. Leaving it...", socketGuild.Name, socketGuild.Id);
-                    SentrySdk.CaptureMessage($"Guild {socketGuild.Name} ({socketGuild.Id}) is not in the config.json. Leaving it...", SentryLevel.Warning);
-                    await socketGuild.LeaveAsync();
+                    await LeaveWrongGuild(socketGuild);
                 }
             }, "Checking for Guilds");
 
@@ -465,6 +451,27 @@ public class DiscordService
         }
     }
 
+    private async Task LeaveWrongGuild(SocketGuild guild)
+    {
+        SentrySdk.AddBreadcrumb("Guild ID", $"{guild.Id}");
+        SentrySdk.AddBreadcrumb("Guild Name", $"{guild.Name}");
+        SentrySdk.AddBreadcrumb("Guild Owner", $"{guild.Owner.Username}#{guild.Owner.Discriminator} ({guild.Owner.Id})");
+        SentrySdk.AddBreadcrumb("Guild Users", $"{string.Join(", ",guild.Users.Select(x => x.Id))}");
+            
+        try
+        {
+            await guild.Owner.SendMessageAsync($"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning("The owner of the guild could not be contacted!");
+        }
+        
+        _logger.LogWarning("Guild {GuildName} ({GuildId}) is not in the config.json. Leaving it...", guild.Name, guild.Id);
+        SentrySdk.CaptureMessage($"Guild {guild.Name} ({guild.Id}) is not in the config.json. Leaving it...", SentryLevel.Warning);
+        await guild.LeaveAsync();
+    }
+    
     private Task ClientOnLog(LogMessage arg)
     {
         _logger.Log(GetLogLevelByDiscordLevel(arg.Severity), arg.Exception, arg.Message);
