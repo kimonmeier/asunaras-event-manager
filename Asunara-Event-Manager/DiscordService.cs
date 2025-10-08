@@ -455,7 +455,7 @@ public class DiscordService
     {
         SentrySdk.AddBreadcrumb("Guild ID", $"{guild.Id}");
         SentrySdk.AddBreadcrumb("Guild Name", $"{guild.Name}");
-        SentrySdk.AddBreadcrumb("Guild Owner", $"{guild.Owner.Username}#{guild.Owner.Discriminator} ({guild.Owner.Id})");
+        SentrySdk.AddBreadcrumb("Guild Owner", $"{guild.Owner?.Username}#{guild.Owner?.Discriminator} ({guild.Owner?.Id})");
         SentrySdk.AddBreadcrumb("Guild Users", $"{string.Join(", ",guild.Users.Select(x => x.Id))}");
             
         try
