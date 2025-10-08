@@ -63,7 +63,7 @@ public class Events
 
 public class FskConfig
 {
-    public List<FskRange> Range { get; set; } = new List<FskRange>();
+    public FskRange[] Range { get; set; } = [];
 }
 
 public class FskRange
