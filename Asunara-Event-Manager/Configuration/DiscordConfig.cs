@@ -31,6 +31,8 @@ public class DiscordConfig
     public ComfortConfig Comfort { get; set; } = new ComfortConfig();
     
     public ActivityConfig Activity { get; set; } = new ActivityConfig();
+    
+    public HalloweenConfig Halloween { get; set; } = new HalloweenConfig();
 }
 
 public class Emotes
@@ -102,4 +104,17 @@ public class ActivityConfig
     public ulong[] ExcludedChannelsId { get; set; } = [];
 
     public string[] AllowedActivities { get; set; } = [];
+}
+
+public class HalloweenConfig
+{
+    public int MinTimeBetweenScaresPerChannel { get; set; }
+    
+    public int MinTimeBetweenScaresPerUser { get; set; }
+    
+    public int MinWaitTimeForScare { get; set; }
+    
+    public int MaxWaitTimeForScare { get; set; }
+    
+    public string[] AudioFiles { get; set; } = [];
 }

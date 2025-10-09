@@ -16,7 +16,7 @@ public static class SentryService
             x.ProfilesSampleRate = config.Sentry.ProfilingSampleRate;
 
 #if DEBUG
-            x.Debug = true;
+            x.Debug = false;
 #endif
             
             x.AddDiagnosticSourceIntegration();

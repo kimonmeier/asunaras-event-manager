@@ -92,6 +92,7 @@ public static class ConfigureServices
         services.AddSingleton<EventParticipantService>();
         services.AddSingleton<EventReminderService>();
         services.AddSingleton<AudioService>();
+        services.AddSingleton<HalloweenService>();
     }
 
     private static void AddPipeline(this IServiceCollection services)
@@ -132,6 +133,8 @@ public static class ConfigureServices
             options.UseDefaultThreadPool();
             options.UseSimpleTypeLoader();
 
+            options.AddJob<PlayHalloweenScareJob>(x => x.DisallowConcurrentExecution().WithIdentity(JobKey.Create(nameof(PlayHalloweenScareJob))).StoreDurably());
+            options.AddJob<SelectHalloweenChannelJob>(x => x.DisallowConcurrentExecution().WithIdentity(JobKey.Create(nameof(SelectHalloweenChannelJob))).StoreDurably());
             options.ScheduleJob<QotdPostJob>(trigger =>
             {
                 trigger

@@ -7,6 +7,7 @@ using EventManager.Events.CheckBirthday;
 using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.ResetUserPreference;
+using EventManager.Events.SelectHalloweenChannel;
 using EventManager.Events.SendMessageToAll;
 using EventManager.Events.SendMessageToEvent;
 using EventManager.Events.ThrowException;
@@ -35,6 +36,8 @@ public class AdminInteraction : InteractionModuleBase
         {
             DiscordUserId = user.Id
         });
+
+        await ModifyOriginalResponseAsync(x => x.Content = "Die Präferenzen für einen Benutzer wurden zurückgestellt");
     }
 
     [SlashCommand("send-message-to-interest", "Sendet eine Nachricht an alle Interessierten für ein Event")]
@@ -44,6 +47,9 @@ public class AdminInteraction : InteractionModuleBase
         {
             Author = Context.User, DiscordEventId = Guid.Parse(eventId), Message = message
         });
+        
+        
+        await ModifyOriginalResponseAsync(x => x.Content = "Die Nachricht wurde an alle Interessierten gesendet");
     }
 
     [SlashCommand("send-message-to-all", "Sendet eine Nachricht an alle die in der Datenbank sind")]
@@ -53,12 +59,14 @@ public class AdminInteraction : InteractionModuleBase
         {
             Author = Context.User, Message = message
         });
+        await ModifyOriginalResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
     }
 
     [SlashCommand("check-birthdays", "Führt die Logik für die Geburtstage aus")]
     public async Task CheckBirthdays()
     {
         await _sender.Send(new CheckBirthdayEvent());
+        await ModifyOriginalResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
     }
 
     [SlashCommand("force-check-activity-channel", "Führt die Logik aus um einen Channel zu checken")]
@@ -87,17 +95,32 @@ public class AdminInteraction : InteractionModuleBase
     public async Task ConnectToVoice(SocketVoiceChannel channel)
     {
         await _audioService.ConnectToVoiceChannelAsync(channel);
+        await ModifyOriginalResponseAsync(x => x.Content = "Client hat sich mit dem Voice-Channel verbunden");
     }
     
     [SlashCommand("disconnect-from-voice", "Disconnects from a voice channel")]
     public async Task DisconnectFromVoice()
     {
         await _audioService.DisconnectFromVoiceChannelAsync();
+        
+        await ModifyOriginalResponseAsync(x => x.Content = "Client wurde vom Voice-Channel getrennt");
     }
 
     [SlashCommand("play-sound", "Plays a sound")]
     public async Task PlaySound(string url)
     {
+        await ModifyOriginalResponseAsync(x => x.Content = "Audio-File wird abgespielt");
+        
         await _audioService.PlayAudioAsync(url);
+        
+        await ModifyOriginalResponseAsync(x => x.Content = "Audio-File wurde abgespielt");
+    }
+
+    [SlashCommand("start-halloween", "Starts the Halloween Event")]
+    public async Task StartHalloween()
+    {
+        await _sender.Send(new SelectHalloweenChannelEvent());
+
+        await ModifyOriginalResponseAsync(x => x.Content = "Halloween Event gestartet");
     }
 }

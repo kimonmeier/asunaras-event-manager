@@ -53,4 +53,9 @@ public class AudioService
         _audioClient.Dispose();
         _audioClient = null;
     }
+    
+    public SocketVoiceChannel? GetConnectedVoiceChannel()
+    {
+        return _audioChannel;
+    }
 }
