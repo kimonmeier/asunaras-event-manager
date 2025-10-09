@@ -88,7 +88,8 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .Where(x => x.Type != ActivityType.MessageCreated)
             .Where(x => x.Date >= since)
             .OrderByDescending(x => x.Date)
-            .GroupBy(x => x.DiscordUserId);
+            .GroupBy(x => x.DiscordUserId)
+            .ToList();
 
         var result = new List<ActivityTopResult>();
         foreach (var group in groups)
@@ -194,6 +195,11 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
     
     private static void NormalizeVoiceActivityEvents(List<ActivityEvent> events, ulong discordUserId, DateTime since)
     {
+        if (events.Count <= 0)
+        {
+            return;
+        }
+        
         ActivityEvent? beforeEvent = events
             .Where(x => x.DiscordUserId == discordUserId)
             .OrderByDescending(x => x.Date)
