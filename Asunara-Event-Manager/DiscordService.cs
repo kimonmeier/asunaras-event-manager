@@ -19,12 +19,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quartz;
-using Sentry;
-using System;
-using System.Reactive.Concurrency;
-using System.Threading.Tasks;
-using Discord.Audio;
 using EventManager.Events.CheckConnectedClients;
+using EventManager.Events.CheckExistingUsers;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Events.MessageReceived;
@@ -82,6 +78,7 @@ public class DiscordService
             _client.ButtonExecuted += ClientOnButtonExecuted;
             _client.ModalSubmitted += ClientOnModalSubmitted;
             _client.MessageReceived += ClientOnMessageReceived;
+            _client.GuildMembersDownloaded += ClientOnGuildMembersDownloaded;
 
             await _client.LoginAsync(TokenType.Bot, _config.Discord.Token);
             await _client.StartAsync();
@@ -119,6 +116,21 @@ public class DiscordService
         }
 
         await SentrySdk.FlushAsync(TimeSpan.FromSeconds(10));
+    }
+
+    private async Task ClientOnGuildMembersDownloaded(SocketGuild arg)
+    {
+        await Task.CompletedTask;
+        
+        if (_config.Discord.MainDiscordServerId != arg.Id)
+        {
+            return;
+        }
+        
+        RunInThread(() => _sender.Send(new CheckExistingUsersEvent()
+        {
+            Users = arg.Users.ToList()
+        }), "ClientOnGuildMembersDownloaded");
     }
 
     private async Task ClientOnUserJoined(SocketGuildUser socketGuildUser)
