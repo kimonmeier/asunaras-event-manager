@@ -117,6 +117,7 @@ public static class ConfigureServices
         services.AddTransient<EventFeedbackRepository>();
         services.AddTransient<UserBirthdayRepository>();
         services.AddTransient<ActivityEventRepository>();
+        services.AddTransient<DiscordUserRepository>();
     }
 
     private static void AddInteractions(this IServiceCollection services)
