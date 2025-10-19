@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using EventManager.Data.Entities.Events.QOTD;
+using EventManager.Data.Entities.QOTD;
 using EventManager.Data.Repositories;
 
 namespace EventManager.Commands.Qotd;

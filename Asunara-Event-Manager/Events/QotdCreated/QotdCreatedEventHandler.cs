@@ -1,5 +1,5 @@
 ﻿using EventManager.Data;
-using EventManager.Data.Entities.Events.QOTD;
+using EventManager.Data.Entities.QOTD;
 using EventManager.Data.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,4 @@
-﻿using EventManager.Data.Entities.Events.Base;
+﻿using EventManager.Data.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.Repositories.Base;
@@ -6,8 +6,8 @@ namespace EventManager.Data.Repositories.Base;
 public abstract class GenericRepository<TEntity> where TEntity : class, IEntity
 {
     private readonly DbContext _dbContext;
+    private readonly List<Guid> _deletedIds = new List<Guid>();
 
-    private List<Guid> deletedIds = new List<Guid>();
     protected DbSet<TEntity> Entities => _dbContext.Set<TEntity>();
 
     protected GenericRepository(DbContext dbContext)
@@ -35,15 +35,15 @@ public abstract class GenericRepository<TEntity> where TEntity : class, IEntity
 
     public Task RemoveAsync(TEntity entity)
     {
-        if (entity is IPersistentEntity persistenEntity)
+        if (entity is IPersistentEntity persistentEntity)
         {
-            persistenEntity.IsDeleted = true;
+            persistentEntity.IsDeleted = true;
 
             return UpdateAsync(entity);
         }
 
         Entities.Remove(entity);
-        deletedIds.Add(entity.Id);
+        _deletedIds.Add(entity.Id);
 
         return Task.CompletedTask;
     }
@@ -84,7 +84,7 @@ public abstract class GenericRepository<TEntity> where TEntity : class, IEntity
             return true;
         }
 
-        return deletedIds.Contains(entityId);
+        return _deletedIds.Contains(entityId);
     }
 
     protected bool HasChanges(TEntity entity)
