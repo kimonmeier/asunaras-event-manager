@@ -1,4 +1,4 @@
-﻿namespace EventManager.Data.Entities.Events.Base;
+﻿namespace EventManager.Data.Entities.Base;
 
 public interface IPersistentEntity : IEntity
 {

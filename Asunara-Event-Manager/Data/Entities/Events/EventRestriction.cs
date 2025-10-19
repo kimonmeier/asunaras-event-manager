@@ -1,4 +1,4 @@
-﻿using EventManager.Data.Entities.Events.Base;
+﻿using EventManager.Data.Entities.Base;
 using EventManager.Data.Enum;
 
 namespace EventManager.Data.Entities.Events;

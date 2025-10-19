@@ -1,4 +1,4 @@
-﻿using EventManager.Data.Entities.Events.Base;
+﻿using EventManager.Data.Entities.Base;
 
 namespace EventManager.Data.Entities.Birthday;
 
