@@ -28,7 +28,8 @@ using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Events.MessageReceived;
-using Sentry.Protocol;
+using EventManager.Events.UserJoinedGuild;
+using EventManager.Events.UserLeftGuild;
 using IResult = Discord.Interactions.IResult;
 using IScheduler = Quartz.IScheduler;
 using RunMode = Discord.Interactions.RunMode;
@@ -72,6 +73,8 @@ public class DiscordService
             _client.Ready += ClientOnReady;
             _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;
             _client.JoinedGuild += ClientOnJoinedGuild;
+            _client.UserLeft += ClientOnUserLeft;
+            _client.UserJoined += ClientOnUserJoined;
             _client.GuildScheduledEventCancelled += ClientOnGuildScheduledEventCancelled;
             _client.GuildScheduledEventCreated += ClientOnGuildScheduledEventCreated;
             _client.GuildScheduledEventUserAdd += ClientOnGuildScheduledEventUserAdd;
@@ -116,6 +119,36 @@ public class DiscordService
         }
 
         await SentrySdk.FlushAsync(TimeSpan.FromSeconds(10));
+    }
+
+    private async Task ClientOnUserJoined(SocketGuildUser socketGuildUser)
+    {
+        await Task.CompletedTask;
+        
+        if (_config.Discord.MainDiscordServerId != socketGuildUser.Guild.Id)
+        {
+            return;
+        }
+        
+        RunInThread(() => _sender.Send(new UserJoinedGuildEvent()
+        {
+            GuildUser = socketGuildUser
+        }), "UserJoinedGuild");
+    }
+
+    private async Task ClientOnUserLeft(SocketGuild socketGuild, SocketUser socketUser)
+    {
+        await Task.CompletedTask;
+        
+        if (_config.Discord.MainDiscordServerId != socketGuild.Id)
+        {
+            return;
+        }
+
+        RunInThread(() => _sender.Send(new UserLeftGuildEvent()
+        {
+            DiscordUserId = socketUser.Id
+        }),  "UserLeftGuild");
     }
 
     private void RunInThread(Func<Task> action, string name)
