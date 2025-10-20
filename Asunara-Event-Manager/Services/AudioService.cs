@@ -47,7 +47,14 @@ public class AudioService
         }
         
         await _audioClient.StopAsync();
-        await _audioChannel!.DisconnectAsync();
+        try
+        {
+            await _audioChannel!.DisconnectAsync();
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
 
         _audioChannel = null;
         _audioClient.Dispose();

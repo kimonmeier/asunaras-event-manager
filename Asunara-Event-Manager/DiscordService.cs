@@ -28,6 +28,7 @@ using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Events.MessageReceived;
+using EventManager.Services;
 using Sentry.Protocol;
 using IResult = Discord.Interactions.IResult;
 using IScheduler = Quartz.IScheduler;
@@ -43,8 +44,9 @@ public class DiscordService
     private readonly ISender _sender;
     private readonly IServiceProvider _services;
     private readonly ISchedulerFactory _schedulerFactory;
+    private readonly AudioService _audioService;
 
-    public DiscordService(ILogger<DiscordService> logger, RootConfig config, DiscordSocketClient client, ISender sender, IServiceProvider services, ISchedulerFactory schedulerFactory)
+    public DiscordService(ILogger<DiscordService> logger, RootConfig config, DiscordSocketClient client, ISender sender, IServiceProvider services, ISchedulerFactory schedulerFactory, AudioService audioService)
     {
         _logger = logger;
         _config = config;
@@ -52,6 +54,7 @@ public class DiscordService
         _sender = sender;
         _services = services;
         _schedulerFactory = schedulerFactory;
+        _audioService = audioService;
     }
 
     public async Task RunAsync(IHost host)
@@ -152,7 +155,7 @@ public class DiscordService
             {
                 Message = arg
             });
-        }, "ClientOnMessageReceived");
+        }, nameof(DiscordService.ClientOnMessageReceived));
 
         return Task.CompletedTask;
     }
@@ -193,6 +196,13 @@ public class DiscordService
 
         RunInThread(async () =>
         {
+            if (user.IsBot)
+            {
+                await ProcessVoiceChannelKickOnBot(prevVoiceState, currentVoiceState);
+
+                return;
+            }
+            
             if (currentVoiceState.VoiceChannel is not null && prevVoiceState.VoiceChannel is not null && currentVoiceState.VoiceChannel.Id != prevVoiceState.VoiceChannel.Id)
             {
                 await _sender.Send(new MemberLeftChannelEvent()
@@ -228,6 +238,17 @@ public class DiscordService
             }
 
         }, nameof(DiscordService.ClientOnUserVoiceStateUpdated));
+    }
+
+    private async Task ProcessVoiceChannelKickOnBot(SocketVoiceState prevVoiceState, SocketVoiceState currentVoiceState)
+    {
+        if (currentVoiceState.VoiceChannel is null || prevVoiceState.VoiceChannel.Id != _audioService.GetConnectedVoiceChannel()?.Id)
+        {
+            return;
+        }
+
+        await _audioService.DisconnectFromVoiceChannelAsync();
+        await _audioService.ConnectToVoiceChannelAsync(currentVoiceState.VoiceChannel);
     }
 
     private Task ClientOnGuildScheduledEventUserAdd(Cacheable<SocketUser, RestUser, IUser, ulong> eventUser, SocketGuildEvent @event)
