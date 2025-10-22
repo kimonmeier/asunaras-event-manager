@@ -11,9 +11,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
 using NetCord.Hosting.Services.ApplicationCommands;
+using NetCord.Hosting.Services.ComponentInteractions;
+using NetCord.Services.ComponentInteractions;
 using Quartz;
 
 namespace EventManager;
@@ -79,7 +82,14 @@ public static class ConfigureServices
     {
         services
             .AddDiscordGateway(options => options.Intents = GatewayIntents.All)
-            .AddApplicationCommands();
+            .AddApplicationCommands()
+            .AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>()
+            .AddComponentInteractions<StringMenuInteraction, StringMenuInteractionContext>()
+            .AddComponentInteractions<UserMenuInteraction, UserMenuInteractionContext>()
+            .AddComponentInteractions<RoleMenuInteraction, RoleMenuInteractionContext>()
+            .AddComponentInteractions<MentionableMenuInteraction, MentionableMenuInteractionContext>()
+            .AddComponentInteractions<ChannelMenuInteraction, ChannelMenuInteractionContext>()
+            .AddComponentInteractions<ModalInteraction, ModalInteractionContext>();
     }
 
     private static void AddServices(this IServiceCollection services)
