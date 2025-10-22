@@ -1,7 +1,8 @@
-﻿using Discord;
-using EventManager.Data.Entities.Activity;
+﻿using EventManager.Data.Entities.Activity;
 using EventManager.Data.Repositories;
 using MediatR;
+using NetCord;
+using NetCord.Rest;
 
 namespace EventManager.Events.ActivityCurrent;
 
@@ -19,19 +20,25 @@ public class ActivityCurrentEventHandler : IRequestHandler<ActivityCurrentEvent>
         ActivityEvent? lastVoiceActivity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(request.User.Id);
         int messageCount = await _activityEventRepository.GetMessageCountByDiscordId(request.User.Id, DateTime.MinValue);
         
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.WithAuthor(x =>
-        {
-            x.WithName(request.User.GlobalName);
-            x.WithIconUrl(request.User.GetAvatarUrl());
-        });
-        builder.WithTitle("Aktivität");
-        builder.WithDescription($"Der User {request.User.GlobalName} hat folgende Aktivität. {request.User.Mention}");
-        builder.WithColor(Color.Green);
-        builder.WithCurrentTimestamp();
-        builder.AddField("**Nachrichten**", messageCount);
-        builder.AddField("**Letzter Voice-Status**", lastVoiceActivity?.Type.ToString() ?? "Unbekannt");
         
-        await request.Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = builder.Build());
+        EmbedProperties embed = new EmbedProperties();
+        embed.WithAuthor(new EmbedAuthorProperties()
+        {
+            Name = request.User.GlobalName,
+            IconUrl = request.User.GetAvatarUrl(ImageFormat.Png)!.ToString()
+        });
+        embed.WithTitle("Aktivität");
+        embed.WithDescription($"Der User {request.User.GlobalName} hat folgende Aktivität. {request.User.Id}");
+        embed.WithColor(new Color(0, 255, 0));
+        embed.AddFields(new EmbedFieldProperties()
+        {
+            Name = "**Nachrichten**", Value = messageCount.ToString()
+        });
+        embed.AddFields(new EmbedFieldProperties()
+        {
+            Name = "**Letzter Voice-Status**", Value = lastVoiceActivity?.Type.ToString() ?? "Unbekannt"
+        });
+        
+        await request.Context.Interaction.ModifyResponseAsync(x => x.AddEmbeds(embed), cancellationToken: cancellationToken);
     }
 }

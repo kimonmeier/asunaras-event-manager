@@ -1,11 +1,11 @@
-﻿using Discord;
-using MediatR;
+﻿using MediatR;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Events.ActivityTop;
 
 public class ActivityTopEvent : IRequest
 {
-    public required IInteractionContext Context { get; init; }
+    public required SlashCommandContext Context { get; init; }
     
     public required DateTime Since { get; init; }
     

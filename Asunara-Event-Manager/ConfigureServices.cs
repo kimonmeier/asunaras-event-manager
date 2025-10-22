@@ -1,6 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using EFCoreSecondLevelCacheInterceptor;
+﻿using EFCoreSecondLevelCacheInterceptor;
 using EventManager.Background;
 using EventManager.Behaviour;
 using EventManager.Commands.Qotd;
@@ -9,11 +7,13 @@ using EventManager.Data;
 using EventManager.Data.Repositories;
 using EventManager.Services;
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NetCord.Gateway;
+using NetCord.Hosting.Gateway;
+using NetCord.Hosting.Services.ApplicationCommands;
 using Quartz;
 
 namespace EventManager;
@@ -77,17 +77,13 @@ public static class ConfigureServices
 
     private static void AddDiscord(this IServiceCollection services)
     {
-        services.AddSingleton<DiscordSocketClient>();
+        services
+            .AddDiscordGateway(options => options.Intents = GatewayIntents.All)
+            .AddApplicationCommands();
     }
 
     private static void AddServices(this IServiceCollection services)
     {
-        services.AddSingleton(new DiscordSocketConfig()
-        {
-            AlwaysDownloadUsers = true,
-            AlwaysDownloadDefaultStickers = true,
-            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.GuildMessages,
-        });
         services.AddSingleton<DiscordService>();
         services.AddSingleton<EventParticipantService>();
         services.AddSingleton<EventReminderService>();

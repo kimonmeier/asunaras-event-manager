@@ -15,24 +15,15 @@ using EventManager.Events.MemberAddedEvent;
 using EventManager.Events.MemberJoinedChannel;
 using EventManager.Events.ModalSubmitted;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quartz;
-using Sentry;
-using System;
-using System.Reactive.Concurrency;
-using System.Threading.Tasks;
-using Discord.Audio;
 using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Events.MessageReceived;
 using EventManager.Services;
-using Sentry.Protocol;
-using IResult = Discord.Interactions.IResult;
 using IScheduler = Quartz.IScheduler;
-using RunMode = Discord.Interactions.RunMode;
 
 namespace EventManager;
 
@@ -242,6 +233,11 @@ public class DiscordService
 
     private async Task ProcessVoiceChannelKickOnBot(SocketVoiceState prevVoiceState, SocketVoiceState currentVoiceState)
     {
+        if (prevVoiceState.VoiceChannel is null)
+        {
+            return;
+        }
+        
         if (currentVoiceState.VoiceChannel is null || prevVoiceState.VoiceChannel.Id != _audioService.GetConnectedVoiceChannel()?.Id)
         {
             return;

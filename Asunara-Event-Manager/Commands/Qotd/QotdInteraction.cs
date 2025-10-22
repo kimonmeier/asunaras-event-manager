@@ -1,18 +1,18 @@
 ﻿using System.Text;
-using Discord;
-using Discord.Interactions;
 using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
 using EventManager.Events.QotdPost;
 using EventManager.Events.QotdSimilarQuestions;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Qotd;
 
-[RequireUserPermission(GuildPermission.SendPolls)]
-[Group("qotd", "Commands für die Question of the Day")]
-public class QotdInteraction : InteractionModuleBase
+[SlashCommand("qotd", "Commands für die Question of the Day",
+    DefaultGuildPermissions = Permissions.SendPolls)]
+public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
     private readonly ILogger<QotdInteraction> _logger;
@@ -31,21 +31,21 @@ public class QotdInteraction : InteractionModuleBase
             Question = question, AuthorId = Context.User.Id,
         });
 
-        await ModifyOriginalResponseAsync(x =>
+        await ModifyResponseAsync(x =>
         {
             x.Content = "Die Frage wurde erfolgreich erstellt";
         });
     }
 
     [SlashCommand("remove", "Removes a question")]
-    public async Task RemoveQuestion([Autocomplete(typeof(QotdQuestionAutocompleteHandler))] string questionId)
+    public async Task RemoveQuestion([SlashCommandParameter(AutocompleteProviderType = typeof(QotdQuestionAutocompleteHandler))] string questionId)
     {
         await _sender.Send(new QotdDeletedEvent()
         {
             QuestionId = Guid.Parse(questionId)
         });
 
-        await ModifyOriginalResponseAsync(x =>
+        await ModifyResponseAsync(x =>
         {
             x.Content = "Die Frage wurde erfolgreich gelöscht";
         });
@@ -56,7 +56,7 @@ public class QotdInteraction : InteractionModuleBase
     {
         await _sender.Send(new QotdPostEvent());
 
-        await ModifyOriginalResponseAsync(x =>
+        await ModifyResponseAsync(x =>
         {
             x.Content = "Es wurde eine QOTD gepostet!";
         });
@@ -73,7 +73,7 @@ public class QotdInteraction : InteractionModuleBase
 
         if (!similarity.Any())
         {
-            await ModifyOriginalResponseAsync(x =>
+            await ModifyResponseAsync(x =>
             {
                 x.Content = $"Es wurde keine ähnliche Frage gefunden";
             });
@@ -89,7 +89,7 @@ public class QotdInteraction : InteractionModuleBase
             builder.AppendLine($"{key} - {(value * 100):F}%");       
         }
         
-        await ModifyOriginalResponseAsync(x =>
+        await ModifyResponseAsync(x =>
         {
             x.Content = builder.ToString();
         });

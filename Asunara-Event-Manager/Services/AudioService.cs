@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Discord.Audio;
 using Discord.WebSocket;
+using NetCord;
 
 namespace EventManager.Services;
 
@@ -33,7 +34,7 @@ public class AudioService
         _isPlaying = false;
     }
 
-    public async Task ConnectToVoiceChannelAsync(SocketVoiceChannel channel)
+    public async Task ConnectToVoiceChannelAsync(IVoiceGuildChannel channel)
     {
         _audioClient = await channel.ConnectAsync(selfDeaf: true);
         _audioChannel = channel;

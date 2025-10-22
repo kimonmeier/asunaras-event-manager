@@ -1,13 +1,13 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Events.PostBirthdayMessage;
+﻿using EventManager.Events.PostBirthdayMessage;
 using MediatR;
+using NetCord;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Birthday;
 
-[RequireUserPermission(GuildPermission.SendPolls)]
-[Group("birthday", "Gibt die Möglichkeit die Geburtstag einzusehen")]
-public class BirthdayInteraction : InteractionModuleBase
+[SlashCommand("birthday", "Gibt die Möglichkeit die Geburtstag einzusehen",
+    DefaultGuildPermissions = Permissions.SendPolls)]
+public class BirthdayInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
 
@@ -25,6 +25,4 @@ public class BirthdayInteraction : InteractionModuleBase
             TextChannelId = ulong.Parse(channelId)
         });
     }
-    
-    
 }

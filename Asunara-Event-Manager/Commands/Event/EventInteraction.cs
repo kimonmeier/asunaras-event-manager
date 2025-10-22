@@ -1,14 +1,15 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Events.AskFeedback;
+﻿using EventManager.Events.AskFeedback;
 using EventManager.Events.ForceFeedback;
 using MediatR;
+using NetCord;
+using NetCord.Rest;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Event;
 
-[RequireUserPermission(GuildPermission.SendPolls)]
-[Group("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten")]
-public class EventInteraction : InteractionModuleBase
+[SlashCommand("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten",
+    DefaultGuildPermissions = Permissions.SendPolls)]
+public class EventInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
 
@@ -17,8 +18,8 @@ public class EventInteraction : InteractionModuleBase
         _sender = sender;
     }
 
-    [SlashCommand("ask-feedback", "Startet den Feedback-Loop manuell!")]
-    public async Task AskForFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId)
+    [SubSlashCommand("ask-feedback", "Startet den Feedback-Loop manuell!")]
+    public async Task AskForFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId)
     {
         await _sender.Send(new AskFeedbackEvent()
         {
@@ -26,8 +27,8 @@ public class EventInteraction : InteractionModuleBase
         });
     }
 
-    [SlashCommand("force-feedback", "Forced Feedback von einem User")]
-    public async Task ForceFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId, IUser user)
+    [SubSlashCommand("force-feedback", "Forced Feedback von einem User")]
+    public async Task ForceFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, User user)
     {
         await _sender.Send(new ForceFeedbackEvent()
         {

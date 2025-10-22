@@ -1,8 +1,4 @@
-﻿using Discord;
-using Discord.Audio;
-using Discord.Interactions;
-using Discord.WebSocket;
-using EventManager.Commands.Event;
+﻿using EventManager.Commands.Event;
 using EventManager.Events.CheckBirthday;
 using EventManager.Events.CheckConnectedClients;
 using EventManager.Events.CheckVoiceActivityForChannel;
@@ -13,12 +9,14 @@ using EventManager.Events.SendMessageToEvent;
 using EventManager.Events.ThrowException;
 using EventManager.Services;
 using MediatR;
+using NetCord;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Admin;
 
-[RequireUserPermission(GuildPermission.ViewAuditLog)]
-[Group("admin", "Admin Commands für den ")]
-public class AdminInteraction : InteractionModuleBase
+[SlashCommand("admin", "Admin Commands für den Bot",
+    DefaultGuildPermissions = Permissions.ViewAuditLog)]
+public class AdminInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
     private readonly AudioService _audioService;
@@ -29,19 +27,19 @@ public class AdminInteraction : InteractionModuleBase
         _audioService = audioService;
     }
 
-    [SlashCommand("reset-user-preference", "Entfernt die User Preference")]
-    public async Task ResetUserPreference(IUser user)
+    [SubSlashCommand("reset-user-preference", "Entfernt die User Preference")]
+    public async Task ResetUserPreference(User user)
     {
         await _sender.Send(new ResetUserPreferenceEvent()
         {
             DiscordUserId = user.Id
         });
 
-        await ModifyOriginalResponseAsync(x => x.Content = "Die Präferenzen für einen Benutzer wurden zurückgestellt");
+        await ModifyResponseAsync(x => x.Content = "Die Präferenzen für einen Benutzer wurden zurückgestellt");
     }
 
     [SlashCommand("send-message-to-interest", "Sendet eine Nachricht an alle Interessierten für ein Event")]
-    public async Task SendMessageToInterest([Autocomplete(typeof(EventUncompletedAutocompleteHandler))] string eventId, string message)
+    public async Task SendMessageToInterest([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, string message)
     {
         await _sender.Send(new SendMessageToEventEvent()
         {
@@ -49,7 +47,7 @@ public class AdminInteraction : InteractionModuleBase
         });
         
         
-        await ModifyOriginalResponseAsync(x => x.Content = "Die Nachricht wurde an alle Interessierten gesendet");
+        await ModifyResponseAsync(x => x.Content = "Die Nachricht wurde an alle Interessierten gesendet");
     }
 
     [SlashCommand("send-message-to-all", "Sendet eine Nachricht an alle die in der Datenbank sind")]
@@ -59,18 +57,18 @@ public class AdminInteraction : InteractionModuleBase
         {
             Author = Context.User, Message = message
         });
-        await ModifyOriginalResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
+        await ModifyResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
     }
 
     [SlashCommand("check-birthdays", "Führt die Logik für die Geburtstage aus")]
     public async Task CheckBirthdays()
     {
         await _sender.Send(new CheckBirthdayEvent());
-        await ModifyOriginalResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
+        await ModifyResponseAsync(x => x.Content = "Die Geburstage wurden überprüft");
     }
 
     [SlashCommand("force-check-activity-channel", "Führt die Logik aus um einen Channel zu checken")]
-    public async Task ForceCheckChannel(IAudioChannel channel)
+    public async Task ForceCheckChannel(IVoiceGuildChannel channel)
     {
         await _sender.Send(new CheckVoiceActivityForChannelEvent()
         {
@@ -92,10 +90,10 @@ public class AdminInteraction : InteractionModuleBase
     }
 
     [SlashCommand("connect-to-voice", "Connects to a voice channel")]
-    public async Task ConnectToVoice(SocketVoiceChannel channel)
+    public async Task ConnectToVoice(IVoiceGuildChannel channel)
     {
         await _audioService.ConnectToVoiceChannelAsync(channel);
-        await ModifyOriginalResponseAsync(x => x.Content = "Client hat sich mit dem Voice-Channel verbunden");
+        await ModifyResponseAsync(x => x.Content = "Client hat sich mit dem Voice-Channel verbunden");
     }
     
     [SlashCommand("disconnect-from-voice", "Disconnects from a voice channel")]
@@ -103,17 +101,17 @@ public class AdminInteraction : InteractionModuleBase
     {
         await _audioService.DisconnectFromVoiceChannelAsync();
         
-        await ModifyOriginalResponseAsync(x => x.Content = "Client wurde vom Voice-Channel getrennt");
+        await ModifyResponseAsync(x => x.Content = "Client wurde vom Voice-Channel getrennt");
     }
 
     [SlashCommand("play-sound", "Plays a sound")]
     public async Task PlaySound(string url)
     {
-        await ModifyOriginalResponseAsync(x => x.Content = "Audio-File wird abgespielt");
+        await ModifyResponseAsync(x => x.Content = "Audio-File wird abgespielt");
         
         await _audioService.PlayAudioAsync(url);
         
-        await ModifyOriginalResponseAsync(x => x.Content = "Audio-File wurde abgespielt");
+        await ModifyResponseAsync(x => x.Content = "Audio-File wurde abgespielt");
     }
 
     [SlashCommand("start-halloween", "Starts the Halloween Event")]
@@ -121,6 +119,6 @@ public class AdminInteraction : InteractionModuleBase
     {
         await _sender.Send(new SelectHalloweenChannelEvent());
 
-        await ModifyOriginalResponseAsync(x => x.Content = "Halloween Event gestartet");
+        await ModifyResponseAsync(x => x.Content = "Halloween Event gestartet");
     }
 }

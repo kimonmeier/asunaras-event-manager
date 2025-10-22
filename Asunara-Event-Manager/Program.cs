@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NetCord.Hosting.Services;
 using Quartz;
 
 Thread.CurrentThread.CurrentCulture = new CultureInfo("de-DE");
@@ -25,6 +26,8 @@ builder.Configuration.AddJsonFile("appsettings.dev.json", optional: true, reload
 builder.Services.AddEventManagerServices(builder.Configuration);
 
 using IHost host = builder.Build();
+
+host.AddModules(typeof(Program).Assembly);
 
 SentryService.Initialize(host.Services.GetRequiredService<RootConfig>());
 
