@@ -1,9 +1,9 @@
-﻿using Discord;
-using Discord.WebSocket;
-using EventManager.Configuration;
-using EventManager.Data.Repositories;
+﻿using EventManager.Data.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.ForceFeedback;
 
@@ -12,7 +12,7 @@ public class ForceFeedbackEventHandler : IRequestHandler<ForceFeedbackEvent>
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly ILogger<ForceFeedbackEventHandler> _logger;
 
-    public ForceFeedbackEventHandler(DiscordEventRepository discordEventRepository, DiscordSocketClient client, ILogger<ForceFeedbackEventHandler> logger)
+    public ForceFeedbackEventHandler(DiscordEventRepository discordEventRepository, GatewayClient client, ILogger<ForceFeedbackEventHandler> logger)
     {
         _discordEventRepository = discordEventRepository;
         _logger = logger;
@@ -27,7 +27,7 @@ public class ForceFeedbackEventHandler : IRequestHandler<ForceFeedbackEvent>
             throw new Exception("Event not found");
         }
         
-        IDMChannel dmChannel = await request.User.CreateDMChannelAsync();
+        DMChannel dmChannel = await request.User.GetDMChannelAsync();
 
         if (dmChannel is null)
         {
@@ -36,19 +36,35 @@ public class ForceFeedbackEventHandler : IRequestHandler<ForceFeedbackEvent>
             return;
         }
 
-        ComponentBuilder feedbackComponent = new ComponentBuilder()
-                .AddRow(new ActionRowBuilder()
-                    .WithButton("⭐", $"{Konst.ButtonFeedback1Star}{Konst.PayloadDelimiter}{@event.DiscordId}")
-                    .WithButton("⭐⭐", $"{Konst.ButtonFeedback2Star}{Konst.PayloadDelimiter}{@event.DiscordId}")
-                    .WithButton("⭐⭐⭐", $"{Konst.ButtonFeedback3Star}{Konst.PayloadDelimiter}{@event.DiscordId}")
-                    .WithButton("⭐⭐⭐⭐", $"{Konst.ButtonFeedback4Star}{Konst.PayloadDelimiter}{@event.DiscordId}")
-                    .WithButton("⭐⭐⭐⭐⭐", $"{Konst.ButtonFeedback5Star}{Konst.PayloadDelimiter}{@event.DiscordId}")
-                )
-            ;
 
+        MessageProperties messageProperties = new();
+        messageProperties.Content =
+            $"Hallöchen du hast gerade beim Event \"{@event.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!";
+        messageProperties.AddComponents(new ActionRowProperties()
+            .AddComponents(new ButtonProperties(
+                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐",
+                ButtonStyle.Primary))
+            .AddComponents(new ButtonProperties(
+                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐",
+                ButtonStyle.Primary))
+            .AddComponents(new ButtonProperties(
+                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐",
+                ButtonStyle.Primary))
+            .AddComponents(new ButtonProperties(
+                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐",
+                ButtonStyle.Primary))
+            .AddComponents(new ButtonProperties(
+                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐⭐",
+                ButtonStyle.Primary)));
 
-        await dmChannel.SendMessageAsync(
-            $"Hallöchen du hast gerade beim Event \"{@event.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!",
-            components: feedbackComponent.Build());
+        try
+        {
+            await dmChannel.SendMessageAsync(messageProperties);
+        }
+        catch (Exception exception)
+        {
+            SentrySdk.CaptureException(exception);
+            _logger.LogError("The User {0} has DM's disabled!", request.User.Id);
+        }
     }
 }

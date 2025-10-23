@@ -37,9 +37,9 @@ public class DiscordConfig
 
 public class Emotes
 {
-    public string Yes { get; set; }
+    public ulong Yes { get; set; }
     
-    public string No { get; set; }
+    public ulong No { get; set; }
 }
 
 public class QotdConfig

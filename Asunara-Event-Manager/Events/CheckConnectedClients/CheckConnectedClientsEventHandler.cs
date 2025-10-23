@@ -1,10 +1,9 @@
-﻿using Discord.WebSocket;
-using EventManager.Data;
+﻿using EventManager.Data;
 using EventManager.Data.Entities.Activity;
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using MediatR;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using NetCord;
 
 namespace EventManager.Events.CheckConnectedClients;
 
@@ -27,7 +26,7 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
         var channelIds = new HashSet<ulong>();
         var wronglyConnectedUserIds = (await _activityEventRepository.GetUserIdsCurrentlyConnectedToVoiceChannels()).ToHashSet();
 
-        foreach (SocketGuildUser connectedUser in request.ConnectedUsers)
+        foreach (GuildUser connectedUser in request.ConnectedUsers)
         {
             await ProcessConnectedUser(connectedUser, channelIds, wronglyConnectedUserIds, cancellationToken);
         }
@@ -36,27 +35,35 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
         await MarkDisconnectedClients(wronglyConnectedUserIds, cancellationToken);
     }
 
-    private async Task ProcessConnectedUser(SocketGuildUser connectedUser, HashSet<ulong> channelIds, HashSet<ulong> wronglyConnectedUserIds, CancellationToken cancellationToken)
+    private async Task ProcessConnectedUser(GuildUser connectedUser, HashSet<ulong> channelIds, HashSet<ulong> wronglyConnectedUserIds, CancellationToken cancellationToken)
     {
         var activity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(connectedUser.Id);
-        var voiceState = connectedUser.VoiceState!.Value;
+        var voiceState = await connectedUser.GetVoiceStateAsync(cancellationToken: cancellationToken);
 
-        channelIds.Add(voiceState.VoiceChannel.Id);
+        if (voiceState.ChannelId is null)
+        {
+            return;
+        }
+        
+        var voiceChannelId = voiceState.ChannelId.Value;
+        
+        
+        channelIds.Add(voiceState.ChannelId.Value);
         wronglyConnectedUserIds.Remove(connectedUser.Id);
 
         if (activity is null)
         {
-            await CreateEntity(connectedUser.Id, voiceState.VoiceChannel.Id, cancellationToken);
+            await CreateEntity(connectedUser.Id, voiceChannelId, cancellationToken);
 
             return;
         }
 
-        if (activity.Type != ActivityType.VoiceChannelLeft && activity.ChannelId == voiceState.VoiceChannel.Id)
+        if (activity.Type != ActivityType.VoiceChannelLeft && activity.ChannelId == voiceChannelId)
         {
             return;
         }
 
-        await CreateEntity(connectedUser.Id, voiceState.VoiceChannel.Id, cancellationToken);
+        await CreateEntity(connectedUser.Id, voiceChannelId, cancellationToken);
     }
 
     private async Task CreateEntity(ulong discordUserId, ulong channelId, CancellationToken cancellationToken)

@@ -1,9 +1,9 @@
-﻿using Discord.WebSocket;
-using MediatR;
+﻿using MediatR;
+using NetCord;
 
 namespace EventManager.Events.CheckConnectedClients;
 
 public class CheckConnectedClientsEvent : IRequest
 {
-    public required List<SocketGuildUser> ConnectedUsers { get; init; }
+    public required List<GuildUser> ConnectedUsers { get; init; }
 }

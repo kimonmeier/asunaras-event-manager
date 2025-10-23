@@ -2,19 +2,13 @@
 
 public static class Konst
 {
-    public const string ButtonReminderYes = "button-reminder-yes";
-    public const string ButtonReminderNo = "button-reminder-no";
+    public const string ButtonReminderYes = "button-reminder:yes";
+    public const string ButtonReminderNo = "button-reminder:no";
     
-    public const string ButtonFeedbackYes = "button-feedback-yes";
-    public const string ButtonFeedbackNo = "button-feedback-no";
+    public const string ButtonFeedbackYes = "button-feedback:yes";
+    public const string ButtonFeedbackNo = "button-feedback:no";
     
     public const string ButtonFeedbackStarGroup = "button-feedback-star";
-    
-    public const string ButtonFeedback1Star = "button-feedback-star-1";
-    public const string ButtonFeedback2Star = "button-feedback-star-2";
-    public const string ButtonFeedback3Star = "button-feedback-star-3";
-    public const string ButtonFeedback4Star = "button-feedback-star-4";
-    public const string ButtonFeedback5Star = "button-feedback-star-5";
     
     public const string ButtonFeedbackVisibilityGroup = "button-feedback-visibility-";
     public const string ButtonFeedbackVisibilityAnonymous = "button-feedback-visibility-anonymous";
@@ -26,7 +20,7 @@ public static class Konst
     public const string ButtonBirthdayRegister = "button-birthday-register";
     public const string ButtonBirthdayDelete = "button-birthday-delete";
 
-    public const string PayloadDelimiter = "||";
+    public const string PayloadDelimiter = ":";
 
 
     public static class Modal
