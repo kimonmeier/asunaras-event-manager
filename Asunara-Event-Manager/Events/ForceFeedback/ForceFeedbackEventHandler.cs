@@ -42,19 +42,19 @@ public class ForceFeedbackEventHandler : IRequestHandler<ForceFeedbackEvent>
             $"Hallöchen du hast gerade beim Event \"{@event.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!";
         messageProperties.AddComponents(new ActionRowProperties()
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{@event.DiscordId}", "⭐⭐⭐⭐⭐",
                 ButtonStyle.Primary)));
 
         try

@@ -3,6 +3,8 @@ using EventManager.Events.ActivityTop;
 using EventManager.Events.ActivityUser;
 using MediatR;
 using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Activity;

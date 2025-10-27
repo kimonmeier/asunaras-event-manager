@@ -131,19 +131,19 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             $"Hallöchen du hast gerade beim Event \"{discordEvent.Name}\" teilgenommen. Wir hoffen es hat dir gefallen und wir würden uns über eine Bewertung freuen!";
         messageProperties.AddComponents(new ActionRowProperties()
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStarGroup}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐⭐",
                 ButtonStyle.Primary)));
 
         try

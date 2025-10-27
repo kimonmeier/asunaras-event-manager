@@ -34,7 +34,7 @@ public class AudioService
         _isPlaying = false;
     }
 
-    public async Task ConnectToVoiceChannelAsync(IVoiceGuildChannel channel)
+    public async Task ConnectToVoiceChannelAsync(ulong channelId)
     {
         _audioClient = await channel.ConnectAsync(selfDeaf: true);
         _audioChannel = channel;

@@ -8,11 +8,9 @@ public static class Konst
     public const string ButtonFeedbackYes = "button-feedback:yes";
     public const string ButtonFeedbackNo = "button-feedback:no";
     
-    public const string ButtonFeedbackStarGroup = "button-feedback-star";
+    public const string ButtonFeedbackStar = "button-feedback-star";
     
-    public const string ButtonFeedbackVisibilityGroup = "button-feedback-visibility-";
-    public const string ButtonFeedbackVisibilityAnonymous = "button-feedback-visibility-anonymous";
-    public const string ButtonFeedbackVisibilityPublic = "button-feedback-visibility-public";
+    public const string ButtonFeedbackVisibility = "button-feedback-visibility";
     
     public const string ButtonMoreFeedback = "button-more-feedback";
     
