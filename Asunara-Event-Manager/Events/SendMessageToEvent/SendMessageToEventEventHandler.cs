@@ -1,23 +1,22 @@
-﻿using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
-using EventManager.Events.SendMessageToAll;
 using MediatR;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.SendMessageToEvent;
 
 public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEventEvent>
 {
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
     private readonly UserPreferenceRepository _userPreferenceRepository;
     private readonly DiscordEventRepository _discordEventRepository;
     private readonly RootConfig _config;
     
-    public SendMessageToEventEventHandler(DiscordSocketClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, DiscordEventRepository discordEventRepository)
+    public SendMessageToEventEventHandler(GatewayClient client, UserPreferenceRepository userPreferenceRepository, RootConfig config, DiscordEventRepository discordEventRepository)
     {
         _client = client;
         _userPreferenceRepository = userPreferenceRepository;
@@ -28,7 +27,8 @@ public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEvent
     public async Task Handle(SendMessageToEventEvent request, CancellationToken cancellationToken)
     {
         List<UserPreference> userPreferences = await _userPreferenceRepository.ListAllAsync();
-        SocketGuildUser guildUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.Author.Id);
+        var cacheGuild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
+        GuildUser guildUser = cacheGuild.Users[request.Author.Id];
 
         DiscordEvent? discordEvent = await _discordEventRepository.FindByEntityAsync(request.DiscordEventId);
         if (discordEvent is null)
@@ -36,27 +36,26 @@ public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEvent
             throw new Exception("Event not found");
         }
 
-        SocketGuildEvent guildEvent = _client.GetGuild(_config.Discord.MainDiscordServerId).GetEvent(discordEvent.DiscordId);
+        GuildScheduledEvent guildEvent = cacheGuild.ScheduledEvents[discordEvent.DiscordId];
 
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.WithTitle("Private Nachricht");
-        embedBuilder.WithAuthor(guildUser.DisplayName, guildUser.GetGuildAvatarUrl());
-        embedBuilder.WithDescription(request.Message);
-        embedBuilder.AddField("Event", guildEvent.Name);
-        embedBuilder.WithColor(Color.Blue);
+        EmbedProperties embed = new EmbedProperties();        
+        embed.WithTitle("Private Nachricht");
+        embed.WithAuthor(new EmbedAuthorProperties().WithName(guildUser.GlobalName).WithIconUrl(guildUser.GetGuildAvatarUrl(ImageFormat.Png)!.ToString(512)));
+        embed.WithDescription(request.Message);
+        embed.WithColor(new Color(0, 0, 255));
 
-        foreach (RestUser user in await guildEvent.GetUsersAsync(new RequestOptions()).FlattenAsync())
+        await foreach (GuildScheduledEventUser scheduledEventUser in guildEvent.GetUsersAsync().WithCancellation(cancellationToken))
         {
-            UserPreference preference = (await _userPreferenceRepository.GetByDiscordAsync(user.Id))!;
+            UserPreference preference = (await _userPreferenceRepository.GetByDiscordAsync(scheduledEventUser.User.Id))!;
 
             if (!(preference.AllowReminderForEvent || preference.AllowReminderForFeedback))
             {
                 continue;
             }
 
-            IDMChannel dmChannel = await user.CreateDMChannelAsync();
+            DMChannel dmChannel = await scheduledEventUser.User.GetDMChannelAsync(cancellationToken: cancellationToken);
             
-            await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
+            await dmChannel.SendMessageAsync(new MessageProperties().AddEmbeds(embed), cancellationToken: cancellationToken);
         }
     }
 }

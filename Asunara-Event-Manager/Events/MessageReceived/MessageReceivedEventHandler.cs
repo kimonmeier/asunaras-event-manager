@@ -1,10 +1,10 @@
-﻿using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Activity;
 using EventManager.Data.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord.Gateway;
 
 namespace EventManager.Events.MessageReceived;
 
@@ -25,9 +25,7 @@ public class MessageReceivedEventHandler : IRequestHandler<MessageReceivedEvent>
 
     public async Task Handle(MessageReceivedEvent request, CancellationToken cancellationToken)
     {
-        SocketGuildChannel? parentChannel = request.Message.Thread?.ParentChannel;
-
-        ulong channelIdToCheck = parentChannel?.Id ?? request.Message.Channel.Id;
+        ulong channelIdToCheck = request.Message.StartedThread?.ParentId ?? request.Message.Channel?.Id ?? throw new InvalidDataException();
         
         if (IsChannelExcluded(channelIdToCheck))
         {

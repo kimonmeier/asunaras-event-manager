@@ -28,7 +28,7 @@ public class EventInteraction : ApplicationCommandModule<ApplicationCommandConte
     }
 
     [SubSlashCommand("force-feedback", "Forced Feedback von einem User")]
-    public async Task ForceFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, User user)
+    public async Task ForceFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, GuildUser user)
     {
         await _sender.Send(new ForceFeedbackEvent()
         {

@@ -1,11 +1,11 @@
-﻿using Discord.WebSocket;
-using MediatR;
+﻿using MediatR;
+using NetCord;
 
 namespace EventManager.Events.MemberLeftChannel;
 
 public class MemberLeftChannelEvent : IRequest
 {
-    public required SocketGuildUser User { get; init; }
+    public required GuildUser User { get; init; }
     
-    public required SocketGuildChannel Channel { get; init; }
+    public required VoiceGuildChannel Channel { get; init; }
 }

@@ -1,10 +1,10 @@
-﻿using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using MediatR;
+using NetCord.Gateway;
 
 namespace EventManager.Events.ResetUserPreference;
 
@@ -13,10 +13,10 @@ public class ResetUserPreferenceEventHandler : IRequestHandler<ResetUserPreferen
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly UserPreferenceRepository _userPreferenceRepository;
     private readonly RootConfig _config;
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
     private readonly ISender _sender;
 
-    public ResetUserPreferenceEventHandler(DbTransactionFactory dbTransactionFactory, UserPreferenceRepository userPreferenceRepository, ISender sender, DiscordSocketClient client, RootConfig config)
+    public ResetUserPreferenceEventHandler(DbTransactionFactory dbTransactionFactory, UserPreferenceRepository userPreferenceRepository, ISender sender, GatewayClient client, RootConfig config)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _userPreferenceRepository = userPreferenceRepository;
@@ -42,7 +42,7 @@ public class ResetUserPreferenceEventHandler : IRequestHandler<ResetUserPreferen
         
         await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
         {
-            DiscordUser = _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.DiscordUserId),
+            DiscordUser = _client.Cache.Guilds[_config.Discord.MainDiscordServerId].Users[request.DiscordUserId],
         }, cancellationToken);
     }
 }

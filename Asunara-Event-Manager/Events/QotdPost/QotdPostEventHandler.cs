@@ -1,25 +1,26 @@
-﻿using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Events.QOTD;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.QotdPost;
 
 public class QotdPostEventHandler : IRequestHandler<QotdPostEvent>
 {
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
     private readonly RootConfig _config;
     private readonly ILogger<QotdPostEventHandler> _logger;
     private readonly DbTransactionFactory _transactionFactory;
     private readonly QotdQuestionRepository _questionRepository;
     private readonly QotdMessageRepository _messageRepository;
 
-    public QotdPostEventHandler(DiscordSocketClient client, RootConfig config, ILogger<QotdPostEventHandler> logger, DbTransactionFactory transactionFactory, QotdQuestionRepository questionRepository, QotdMessageRepository messageRepository)
+    public QotdPostEventHandler(GatewayClient client, RootConfig config, ILogger<QotdPostEventHandler> logger, DbTransactionFactory transactionFactory, QotdQuestionRepository questionRepository, QotdMessageRepository messageRepository)
     {
         _client = client;
         _config = config;
@@ -37,7 +38,7 @@ public class QotdPostEventHandler : IRequestHandler<QotdPostEvent>
             return;
         }
         
-        SocketTextChannel channel = _client.GetGuild(_config.Discord.MainDiscordServerId).GetTextChannel(_config.Discord.Qotd.ChannelId);
+        TextChannel channel = _client.Cache.Guilds[_config.Discord.MainDiscordServerId].GetTextChannel(_config.Discord.Qotd.ChannelId);
 
         if (channel is null)
         {
@@ -47,8 +48,11 @@ public class QotdPostEventHandler : IRequestHandler<QotdPostEvent>
 
         var qotd = await FindQuestionOfTheDay();
 
-        var qotdMessage = await channel.SendMessageAsync(string.Format(_config.Discord.Qotd.Text, qotd.Question));
-        await channel.CreateThreadAsync(string.Format(_config.Discord.Qotd.ThreadTitle, DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy")), ThreadType.PublicThread, ThreadArchiveDuration.OneWeek, qotdMessage);
+        var qotdMessage = await channel.SendMessageAsync(string.Format(_config.Discord.Qotd.Text, qotd.Question), cancellationToken: cancellationToken);
+        
+        GuildThreadFromMessageProperties threadProperties = new GuildThreadFromMessageProperties(string.Format(_config.Discord.Qotd.ThreadTitle, DateOnly.FromDateTime(DateTime.Now).ToString("dd.MM.yyyy")));
+        threadProperties.WithAutoArchiveDuration(ThreadArchiveDuration.OneDay);
+        await qotdMessage.CreateGuildThreadAsync(threadProperties, cancellationToken: cancellationToken);
 
         using var dbTransaction = await _transactionFactory.CreateTransaction();
 

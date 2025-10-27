@@ -1,5 +1,6 @@
 ﻿using EventManager.Data.Entities.Events.QOTD;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using NetCord;
 using NetCord.Rest;
 using NetCord.Services;

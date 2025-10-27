@@ -16,7 +16,6 @@ public static class Konst
     
     public const string ButtonMoreFeedback = "button-more-feedback";
     
-    public const string ButtonBirthdayGroup = "button-birthday-";
     public const string ButtonBirthdayRegister = "button-birthday-register";
     public const string ButtonBirthdayDelete = "button-birthday-delete";
 

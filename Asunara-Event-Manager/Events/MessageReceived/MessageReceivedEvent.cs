@@ -1,10 +1,10 @@
-﻿using Discord.WebSocket;
-using MediatR;
+﻿using MediatR;
+using NetCord.Gateway;
 
 namespace EventManager.Events.MessageReceived;
 
 public class MessageReceivedEvent : IRequest
 {
-    public required SocketMessage Message { get; init; }
+    public required Message Message { get; init; }
     
 }

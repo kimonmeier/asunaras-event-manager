@@ -1,14 +1,12 @@
-﻿using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using MediatR;
+﻿using MediatR;
+using NetCord;
 
 namespace EventManager.Events.MemberAddedEvent;
 
 public class MemberAddedEventEvent : IRequest
 {
-    public required IUser User { get; init; }
+    public required GuildUser User { get; init; }
     
-    public required SocketGuildEvent Event { get; init; }
+    public required GuildScheduledEvent Event { get; init; }
     
 }
