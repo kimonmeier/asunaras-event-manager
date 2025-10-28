@@ -2,11 +2,11 @@
 
 public static class Konst
 {
-    public const string ButtonReminderYes = "button-reminder:yes";
-    public const string ButtonReminderNo = "button-reminder:no";
+    public const string ButtonReminderYes = "button-reminder-yes";
+    public const string ButtonReminderNo = "button-reminder-no";
     
-    public const string ButtonFeedbackYes = "button-feedback:yes";
-    public const string ButtonFeedbackNo = "button-feedback:no";
+    public const string ButtonFeedbackYes = "button-feedback-yes";
+    public const string ButtonFeedbackNo = "button-feedback-no";
     
     public const string ButtonFeedbackStar = "button-feedback-star";
     

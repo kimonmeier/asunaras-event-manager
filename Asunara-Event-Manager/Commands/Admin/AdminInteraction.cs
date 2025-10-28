@@ -92,7 +92,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
     [SlashCommand("connect-to-voice", "Connects to a voice channel")]
     public async Task ConnectToVoice(IVoiceGuildChannel channel)
     {
-        await _audioService.ConnectToVoiceChannelAsync(channel.Id);
+        await _audioService.ConnectToVoiceChannelAsync(channel.GuildId, channel.Id);
         await ModifyResponseAsync(x => x.Content = "Client hat sich mit dem Voice-Channel verbunden");
     }
     

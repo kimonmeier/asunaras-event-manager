@@ -73,12 +73,12 @@ public class OnUserVoiceStateUpdate(
         }
 
         if (currentVoiceState.ChannelId is null ||
-            prevVoiceState.ChannelId != audioService.GetConnectedVoiceChannel()?.Id)
+            prevVoiceState.ChannelId != audioService.GetConnectedVoiceChannelId())
         {
             return;
         }
 
         await audioService.DisconnectFromVoiceChannelAsync();
-        await audioService.ConnectToVoiceChannelAsync(currentVoiceState.ChannelId.Value);
+        await audioService.ConnectToVoiceChannelAsync(currentVoiceState.GuildId, currentVoiceState.ChannelId.Value);
     }
 }

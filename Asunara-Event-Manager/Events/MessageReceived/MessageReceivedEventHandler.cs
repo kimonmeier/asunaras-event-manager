@@ -25,6 +25,12 @@ public class MessageReceivedEventHandler : IRequestHandler<MessageReceivedEvent>
 
     public async Task Handle(MessageReceivedEvent request, CancellationToken cancellationToken)
     {
+        if (request.Message.GuildId is null)
+        {
+            _logger.LogDebug("Message received is in private message");
+            return;
+        }
+        
         ulong channelIdToCheck = request.Message.StartedThread?.ParentId ?? request.Message.Channel?.Id ?? throw new InvalidDataException();
         
         if (IsChannelExcluded(channelIdToCheck))

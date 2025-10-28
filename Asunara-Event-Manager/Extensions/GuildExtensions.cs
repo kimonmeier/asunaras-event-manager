@@ -28,4 +28,9 @@ public static class GuildExtensions
 
         return voiceGuildChannel;
     }
+
+    public static IEnumerable<GuildUser> GetConnectedUsers(this Guild guild, ulong voiceChannelId)
+    {
+        return guild.VoiceStates.Where(x => x.Value.ChannelId == voiceChannelId).Select(x => guild.Users[x.Key]);
+    }
 }

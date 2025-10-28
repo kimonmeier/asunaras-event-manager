@@ -17,7 +17,7 @@ public class BirthdayInteraction : ApplicationCommandModule<ApplicationCommandCo
     }
 
     
-    [SlashCommand("post-message", "Postet die Nachricht für die Verwaltung der Geburtstage")]
+    [SubSlashCommand("post-message", "Postet die Nachricht für die Verwaltung der Geburtstage")]
     public async Task PostBirthdayMessage(string channelId)
     {
         await _sender.Send(new PostBirthdayMessageEvent()

@@ -31,7 +31,8 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
 
     public async Task Handle(SelectHalloweenChannelEvent request, CancellationToken cancellationToken)
     {
-        var voiceChannels = _client.Cache.Guilds[_config.Discord.MainDiscordServerId].VoiceStates
+        var guild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
+        var voiceChannels = guild.VoiceStates
             .GroupBy(x => x.Value.ChannelId).Where(x => x.Key != null).Select(x => new { Channel = x.Key.Value, ConnectedUsers = x.ToList() })
             .ToList();
 
@@ -77,7 +78,7 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
         }
 
         _logger.LogDebug("Scaring channel {ChannelId} trying to connect", channelToScare.Channel);
-        await _audioService.ConnectToVoiceChannelAsync(channelToScare.Channel);
+        await _audioService.ConnectToVoiceChannelAsync(guild.Id, channelToScare.Channel);
 
         var timeToWait = Random.Shared.Next(_config.Discord.Halloween.MinWaitTimeForScare,
             _config.Discord.Halloween.MaxWaitTimeForScare);

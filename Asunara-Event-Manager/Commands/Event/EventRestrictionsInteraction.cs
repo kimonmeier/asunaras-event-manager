@@ -16,7 +16,7 @@ public class EventRestrictionsInteraction : ApplicationCommandModule<Application
         _sender = sender;
     }
 
-    [SlashCommand("fsk", "Fügt eine FSK Restriktion auf ein Event ein")]
+    [SubSlashCommand("fsk", "Fügt eine FSK Restriktion auf ein Event ein")]
     public async Task AddFskRestriction([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, int? maxAge = null,
         int? minAge = null)
     {

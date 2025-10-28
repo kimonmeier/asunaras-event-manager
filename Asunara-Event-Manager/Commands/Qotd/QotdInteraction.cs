@@ -23,7 +23,7 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
         _logger = logger;
     }
 
-    [SlashCommand("add", "Adds a new question")]
+    [SubSlashCommand("add", "Adds a new question")]
     public async Task AddQuestion(string question)
     {
         await _sender.Send(new QotdCreatedEvent()
@@ -37,7 +37,7 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
         });
     }
 
-    [SlashCommand("remove", "Removes a question")]
+    [SubSlashCommand("remove", "Removes a question")]
     public async Task RemoveQuestion([SlashCommandParameter(AutocompleteProviderType = typeof(QotdQuestionAutocompleteHandler))] string questionId)
     {
         await _sender.Send(new QotdDeletedEvent()
@@ -51,7 +51,7 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
         });
     }
 
-    [SlashCommand("post", "Posts a QOTD")]
+    [SubSlashCommand("post", "Posts a QOTD")]
     public async Task PostQuestion()
     {
         await _sender.Send(new QotdPostEvent());
@@ -62,7 +62,7 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
         });
     }
 
-    [SlashCommand("similar", "Checkt die Übereinstimmung zu vorhandenen Fragen")]
+    [SubSlashCommand("similar", "Checkt die Übereinstimmung zu vorhandenen Fragen")]
     public async Task CheckSimilarQuestion(string question)
     {
         var similarity = await _sender.Send(new QotdSimilarQuestionsEvent()

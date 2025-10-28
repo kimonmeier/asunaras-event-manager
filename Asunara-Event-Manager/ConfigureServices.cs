@@ -83,6 +83,7 @@ public static class ConfigureServices
         services
             .AddDiscordGateway(options => options.Intents = GatewayIntents.All)
             .AddApplicationCommands()
+            .AddGatewayHandlers(typeof(Program).Assembly)
             .AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>()
             .AddComponentInteractions<StringMenuInteraction, StringMenuInteractionContext>()
             .AddComponentInteractions<UserMenuInteraction, UserMenuInteractionContext>()

@@ -1,3 +1,4 @@
+using EventManager.Configuration;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NetCord.Gateway;
@@ -5,10 +6,16 @@ using NetCord.Hosting.Gateway;
 
 namespace EventManager.Interactions.Events;
 
-public class OnGuildJoinedEvent(ISender sender, ILogger<OnGuildJoinedEvent> logger) : IGuildCreateGatewayHandler
+public class OnGuildJoinedEvent(RootConfig config, ILogger<OnGuildJoinedEvent> logger) : IGuildCreateGatewayHandler
 {
     public async ValueTask HandleAsync(GuildCreateEventArgs arg)
     {
+        if (arg.GuildId == config.Discord.MainDiscordServerId || arg.GuildId == config.Discord.MainDiscordServerId)
+        {
+            return;
+        }
+        
+        
         var guild = arg.Guild;
         SentrySdk.AddBreadcrumb("Guild ID", $"{guild.Id}");
         SentrySdk.AddBreadcrumb("Guild Name", $"{guild.Name}");

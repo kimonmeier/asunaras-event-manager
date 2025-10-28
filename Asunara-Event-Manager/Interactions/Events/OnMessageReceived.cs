@@ -7,12 +7,11 @@ namespace EventManager.Interactions.Events;
 
 public class OnMessageReceived(ISender sender) : IMessageCreateGatewayHandler
 {
-    
-    public async ValueTask HandleAsync(Message arg)
+    public async ValueTask HandleAsync(Message message)
     {
         await sender.Send(new MessageReceivedEvent()
         {
-            Message = arg
+            Message = message
         });
     }
 }
