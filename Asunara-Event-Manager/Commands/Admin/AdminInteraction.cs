@@ -41,7 +41,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Die Präferenzen für einen Benutzer wurden zurückgestellt");
     }
 
-    [SlashCommand("send-message-to-interest", "Sendet eine Nachricht an alle Interessierten für ein Event")]
+    [SubSlashCommand("send-message-to-interest", "Sendet eine Nachricht an alle Interessierten für ein Event")]
     public async Task SendMessageToInterest([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, string message)
     {
         await this.Deferred();
@@ -55,7 +55,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Die Nachricht wurde an alle Interessierten gesendet");
     }
 
-    [SlashCommand("send-message-to-all", "Sendet eine Nachricht an alle die in der Datenbank sind")]
+    [SubSlashCommand("send-message-to-all", "Sendet eine Nachricht an alle die in der Datenbank sind")]
     public async Task SendMessageToAll(string message)
     {
         await this.Deferred();
@@ -68,7 +68,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Es wurde erfolgreich eine Nachricht an alle User gesendet!");
     }
 
-    [SlashCommand("check-birthdays", "Führt die Logik für die Geburtstage aus")]
+    [SubSlashCommand("check-birthdays", "Führt die Logik für die Geburtstage aus")]
     public async Task CheckBirthdays()
     {
         await this.Deferred();
@@ -77,7 +77,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await this.Answer("Die Geburstage wurden überprüft");
     }
 
-    [SlashCommand("force-check-activity-channel", "Führt die Logik aus um einen Channel zu checken")]
+    [SubSlashCommand("force-check-activity-channel", "Führt die Logik aus um einen Channel zu checken")]
     public async Task ForceCheckChannel(IVoiceGuildChannel channel)
     {
         await this.Deferred();
@@ -90,7 +90,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await this.Answer("Der Channel {0} wurde erfolgreich auf die Aktivität überprüft", channel.Name);
     }
 
-    [SlashCommand("force-exception", "Forced eine Exception für Sentry")]
+    [SubSlashCommand("force-exception", "Forced eine Exception für Sentry")]
     public async Task ForceException(bool withMediator)
     {
         await this.Deferred();
@@ -104,7 +104,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         }
     }
 
-    [SlashCommand("connect-to-voice", "Connects to a voice channel")]
+    [SubSlashCommand("connect-to-voice", "Connects to a voice channel")]
     public async Task ConnectToVoice(IVoiceGuildChannel channel)
     {
         await this.Deferred(true);
@@ -113,7 +113,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Client hat sich mit dem Voice-Channel verbunden");
     }
     
-    [SlashCommand("disconnect-from-voice", "Disconnects from a voice channel")]
+    [SubSlashCommand("disconnect-from-voice", "Disconnects from a voice channel")]
     public async Task DisconnectFromVoice()
     {
         await this.Deferred(true);
@@ -123,7 +123,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Client wurde vom Voice-Channel getrennt");
     }
 
-    [SlashCommand("play-sound", "Plays a sound")]
+    [SubSlashCommand("play-sound", "Plays a sound")]
     public async Task PlaySound(string url)
     {
         await this.Deferred(true);
@@ -135,7 +135,7 @@ public class AdminInteraction : ApplicationCommandModule<ApplicationCommandConte
         await ModifyResponseAsync(x => x.Content = "Audio-File wurde abgespielt");
     }
 
-    [SlashCommand("start-halloween", "Starts the Halloween Event")]
+    [SubSlashCommand("start-halloween", "Starts the Halloween Event")]
     public async Task StartHalloween()
     {
         await this.Deferred();
