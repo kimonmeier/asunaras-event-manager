@@ -18,6 +18,7 @@ public class OnUserVoiceStateUpdate(
     public async ValueTask HandleAsync(VoiceState currentVoiceState)
     {
         var prevVoiceState = voiceStateHistoryService.GetLastVoiceState(currentVoiceState.UserId);
+        voiceStateHistoryService.AddLastVoiceState(currentVoiceState);
         var guild = client.Cache.Guilds[currentVoiceState.GuildId];
         var currentUser = guild.Users[currentVoiceState.UserId];
 

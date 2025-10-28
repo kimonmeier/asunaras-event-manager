@@ -1,17 +1,17 @@
 ﻿using EventManager.Events.ActivityCurrent;
 using EventManager.Events.ActivityTop;
 using EventManager.Events.ActivityUser;
+using EventManager.Extensions;
+using EventManager.TypeReader;
 using MediatR;
 using NetCord;
-using NetCord.Gateway;
-using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Activity;
 
 [SlashCommand("activity", "Die Commands für die Aktivität der Nutzer",
-    DefaultGuildPermissions = Permissions.SendPolls)]
-public class ActivityInteraction : ApplicationCommandModule<SlashCommandContext>
+    DefaultGuildPermissions = Permissions.SendPolls, Contexts = [InteractionContextType.Guild])]
+public class ActivityInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
 
@@ -21,20 +21,25 @@ public class ActivityInteraction : ApplicationCommandModule<SlashCommandContext>
     }
 
     [SubSlashCommand("top", "Die Top-Aktivität der User")]
-    public async Task Top(bool ignoreAfk = true, bool ignoreTeamMembers = true, DateTime? since = null)
+    public async Task Top(bool ignoreAfk = true, bool ignoreTeamMembers = true,
+        [SlashCommandParameter(TypeReaderType = typeof(DateOnlyTypeReader))] DateOnly? since = null)
     {
+        await this.Deferred();
+
         await _sender.Send(new ActivityTopEvent()
         {
             Context = Context,
             IgnoreAfk = ignoreAfk,
             IgnoreTeamMember = ignoreTeamMembers,
-            Since = since ?? DateTime.MinValue,
+            Since = since ?? DateOnly.MinValue,
         });
     }
 
     [SubSlashCommand("current", "Zeigt den aktuellen Status laut Aktivität an!")]
     public async Task Current(GuildUser user)
     {
+        await this.Deferred();
+
         await _sender.Send(new ActivityCurrentEvent()
         {
             Context = Context, User = user,
@@ -42,20 +47,26 @@ public class ActivityInteraction : ApplicationCommandModule<SlashCommandContext>
     }
 
     [SubSlashCommand("user", "Zeigt die Aktivität von einem User an")]
-    public async Task User(GuildUser user, bool ignoreAfk = true, DateTime? since = null)
+    public async Task User(GuildUser user, bool ignoreAfk = true,
+        [SlashCommandParameter(TypeReaderType = typeof(DateOnlyTypeReader))] DateOnly? since = null)
     {
+        await this.Deferred();
+
         await _sender.Send(new ActivityUserEvent()
         {
             Context = Context, User = user, Since = since, IgnoreAfk = ignoreAfk
         });
     }
-    
+
     [SubSlashCommand("me", "Zeigt die Aktivität von dir selber")]
-    public async Task Me(bool ignoreAfk = true, DateTime? since = null)
+    public async Task Me([SlashCommandParameter(TypeReaderType = typeof(DateOnlyTypeReader))] DateOnly? since = null,
+        bool ignoreAfk = true)
     {
+        await this.Deferred();
+
         await _sender.Send(new ActivityUserEvent()
         {
-            Context = Context, User = Context.Guild.Users[Context.User.Id], Since = since, IgnoreAfk = ignoreAfk
+            Context = Context, User = Context.Guild!.Users[Context.User.Id], Since = since, IgnoreAfk = ignoreAfk
         });
     }
 }

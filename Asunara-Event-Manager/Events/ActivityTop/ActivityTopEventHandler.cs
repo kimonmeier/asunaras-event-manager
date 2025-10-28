@@ -24,8 +24,8 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
     {
         var guild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
 
-        var topMessages = await _activityEventRepository.GetTopMessagesSince(request.Since);
-        var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since, request.IgnoreAfk);
+        var topMessages = await _activityEventRepository.GetTopMessagesSince(request.Since.ToDateTime(TimeOnly.MinValue));
+        var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since.ToDateTime(TimeOnly.MinValue), request.IgnoreAfk);
 
         if (request.IgnoreTeamMember)
         {

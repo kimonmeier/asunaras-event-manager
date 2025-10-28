@@ -1,4 +1,5 @@
 ﻿using EventManager.Events.AddFSKRestriction;
+using EventManager.Extensions;
 using MediatR;
 using NetCord;
 using NetCord.Services.ApplicationCommands;
@@ -6,7 +7,7 @@ using NetCord.Services.ApplicationCommands;
 namespace EventManager.Commands.Event;
 
 [SlashCommand("event-restrictions", "Commands die das Event beeinflussen",
-    DefaultGuildPermissions = Permissions.SendPolls)]
+    DefaultGuildPermissions = Permissions.SendPolls, Contexts = [InteractionContextType.Guild])]
 public class EventRestrictionsInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
@@ -20,14 +21,13 @@ public class EventRestrictionsInteraction : ApplicationCommandModule<Application
     public async Task AddFskRestriction([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, int? maxAge = null,
         int? minAge = null)
     {
+        await this.Deferred();
+        
         await _sender.Send(new AddFSKRestrictionEvent()
         {
             DiscordEventId = Guid.Parse(eventId), MaxAge = maxAge, MinAge = minAge
         });
 
-        await ModifyResponseAsync(x =>
-        {
-            x.Content = "Die Restriktion wurde erstellt";
-        });
+        await this.Answer("Die Restriktion wurde angewendet!");
     }
 }

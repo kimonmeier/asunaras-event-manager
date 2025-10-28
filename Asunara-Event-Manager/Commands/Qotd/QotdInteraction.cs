@@ -3,6 +3,7 @@ using EventManager.Events.QotdCreated;
 using EventManager.Events.QotdDeleted;
 using EventManager.Events.QotdPost;
 using EventManager.Events.QotdSimilarQuestions;
+using EventManager.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NetCord;
@@ -11,7 +12,7 @@ using NetCord.Services.ApplicationCommands;
 namespace EventManager.Commands.Qotd;
 
 [SlashCommand("qotd", "Commands für die Question of the Day",
-    DefaultGuildPermissions = Permissions.SendPolls)]
+    DefaultGuildPermissions = Permissions.SendPolls, Contexts = [InteractionContextType.Guild])]
 public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
@@ -26,6 +27,8 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
     [SubSlashCommand("add", "Adds a new question")]
     public async Task AddQuestion(string question)
     {
+        await this.Deferred();
+        
         await _sender.Send(new QotdCreatedEvent()
         {
             Question = question, AuthorId = Context.User.Id,
@@ -40,6 +43,8 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
     [SubSlashCommand("remove", "Removes a question")]
     public async Task RemoveQuestion([SlashCommandParameter(AutocompleteProviderType = typeof(QotdQuestionAutocompleteHandler))] string questionId)
     {
+        await this.Deferred();
+        
         await _sender.Send(new QotdDeletedEvent()
         {
             QuestionId = Guid.Parse(questionId)
@@ -54,6 +59,8 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
     [SubSlashCommand("post", "Posts a QOTD")]
     public async Task PostQuestion()
     {
+        await this.Deferred();
+        
         await _sender.Send(new QotdPostEvent());
 
         await ModifyResponseAsync(x =>
@@ -65,6 +72,8 @@ public class QotdInteraction : ApplicationCommandModule<ApplicationCommandContex
     [SubSlashCommand("similar", "Checkt die Übereinstimmung zu vorhandenen Fragen")]
     public async Task CheckSimilarQuestion(string question)
     {
+        await this.Deferred();
+        
         var similarity = await _sender.Send(new QotdSimilarQuestionsEvent()
         {
             Question = question
