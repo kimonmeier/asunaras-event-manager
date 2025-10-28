@@ -70,7 +70,7 @@ public class
         eventFeedbackMessage.Content =
             "Darf ich dich nach Events bei welchen du Teilgenommen hast, nach Feedback fragen?";
 
-        reminderMessage.AddComponents(new ActionRowProperties()
+        eventFeedbackMessage.AddComponents(new ActionRowProperties()
             .AddComponents(new ButtonProperties(Konst.ButtonFeedbackYes,
                 EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes.Id), ButtonStyle.Secondary))
             .AddComponents(new ButtonProperties(Konst.ButtonFeedbackNo,
