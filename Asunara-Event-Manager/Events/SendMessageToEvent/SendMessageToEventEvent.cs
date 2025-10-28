@@ -1,11 +1,11 @@
-﻿using Discord;
-using MediatR;
+﻿using MediatR;
+using NetCord;
 
 namespace EventManager.Events.SendMessageToEvent;
 
 public class SendMessageToEventEvent : IRequest
 {
-    public required IUser Author { get; init; }
+    public required User Author { get; init; }
     
     public required Guid DiscordEventId { get; init; }
     

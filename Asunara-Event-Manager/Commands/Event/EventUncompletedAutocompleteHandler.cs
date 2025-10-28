@@ -1,11 +1,13 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Data.Entities.Events;
+﻿using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
+using NetCord;
+using NetCord.Rest;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Event;
 
-public class EventUncompletedAutocompleteHandler : AutocompleteHandler
+public class EventUncompletedAutocompleteHandler : IAutocompleteProvider<AutocompleteInteractionContext>
 {
     private readonly DiscordEventRepository _repository;
 
@@ -14,16 +16,16 @@ public class EventUncompletedAutocompleteHandler : AutocompleteHandler
         _repository = eventRepository;
     }
 
-    public async override Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
+    public async ValueTask<IEnumerable<ApplicationCommandOptionChoiceProperties>?> GetChoicesAsync(ApplicationCommandInteractionDataOption option, AutocompleteInteractionContext context)
     {
         List<DiscordEvent> discordEvents = await _repository.GetAllUncompleted();
 
-        List<AutocompleteResult> autocompleteResults = new List<AutocompleteResult>();
-        foreach (DiscordEvent discordEvent in discordEvents.Where(x => x.Name.Contains(autocompleteInteraction.Data.Current.Value as string ?? string.Empty, StringComparison.InvariantCultureIgnoreCase)))
+        List<ApplicationCommandOptionChoiceProperties> autocompleteResults = new List<ApplicationCommandOptionChoiceProperties>();
+        foreach (DiscordEvent discordEvent in discordEvents.Where(x => x.Name.Contains(option.Value ?? string.Empty, StringComparison.InvariantCultureIgnoreCase)))
         {
-            autocompleteResults.Add(new AutocompleteResult(discordEvent.Name.WithMaxLength(100), discordEvent.Id.ToString()));
+            autocompleteResults.Add(new ApplicationCommandOptionChoiceProperties(discordEvent.Name.WithMaxLength(100), discordEvent.Id.ToString()));
         }
         
-        return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
+        return autocompleteResults.Take(25);
     }
 }

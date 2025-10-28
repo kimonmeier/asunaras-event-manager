@@ -1,9 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.EventExtendedFeedback;
 
@@ -12,11 +14,12 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly EventFeedbackRepository _eventFeedbackRepository;
     private readonly DiscordEventRepository _discordEventRepository;
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
     private readonly RootConfig _config;
 
-    public EventExtendedFeedbackEventHandler(DbTransactionFactory dbTransactionFactory, EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository,
-        DiscordSocketClient client, RootConfig config)
+    public EventExtendedFeedbackEventHandler(DbTransactionFactory dbTransactionFactory,
+        EventFeedbackRepository eventFeedbackRepository, DiscordEventRepository discordEventRepository,
+        GatewayClient client, RootConfig config)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _eventFeedbackRepository = eventFeedbackRepository;
@@ -34,40 +37,53 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
             throw new Exception("Event not found");
         }
 
-        var transaction = await _dbTransactionFactory.CreateTransaction();;
+        var transaction = await _dbTransactionFactory.CreateTransaction();
+        ;
 
-        var eventFeedback = await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
+        var eventFeedback =
+            await _eventFeedbackRepository.GetOrCreateByDiscordEventAndUser(@event.Id, request.DiscordUserId);
         eventFeedback.Critic = request.Critic;
         eventFeedback.Good = request.Good;
         eventFeedback.Suggestion = request.Suggestion;
 
 
-        Embed feedbackEmbed = new EmbedBuilder()
-            .WithAuthor("Event-Manager")
-            .WithColor(Color.Purple)
-            .AddField("Ersteller", eventFeedback.Anonymous ? "Anonym!" : _client.GetGuild(_config.Discord.MainDiscordServerId).GetUser(request.DiscordUserId).DisplayName)
-            .AddField("Sterne", $"{eventFeedback.Score:F2} / 5 Sternen")
-            .AddField("Was dem User gefallen hat", FormatField(eventFeedback.Good))
-            .AddField("Was dem User nicht gefallen hat", FormatField(eventFeedback.Critic))
-            .AddField("Was der User verbessern würde", FormatField(eventFeedback.Suggestion))
-            .Build();
+        EmbedProperties feedbackEmbed = new EmbedProperties()
+            .WithAuthor(new EmbedAuthorProperties() { Name = "Event-Manager" })
+            .WithColor(new Color(124, 0, 124))
+            .AddFields(
+                new EmbedFieldProperties()
+                {
+                    Name = "Ersteller",
+                    Value = eventFeedback.Anonymous
+                        ? "Anonym!"
+                        : _client.Cache.Guilds[_config.Discord.MainDiscordServerId].Users[request.DiscordUserId]
+                            .Nickname
+                },
+                new EmbedFieldProperties() { Name = "Sterne", Value = $"{eventFeedback.Score:F2} / 5 Sterne" },
+                new EmbedFieldProperties()
+                    { Name = "Was dem User gefallen hat", Value = FormatField(eventFeedback.Good) },
+                new EmbedFieldProperties()
+                    { Name = "Was dem User nicht gefallen hat", Value = FormatField(eventFeedback.Critic) },
+                new EmbedFieldProperties()
+                    { Name = "Was der User verbessern würde", Value = FormatField(eventFeedback.Suggestion) }
+            );
 
-        IMessage message = await _client
-            .GetGuild(_config.Discord.TeamDiscordServerId)
+        var message = await _client
+            .Cache
+            .Guilds[_config.Discord.TeamDiscordServerId]
             .GetTextChannel(_config.Discord.Event.FeedbackChannelId)
-            .GetMessageAsync(@event.FeedbackMessage!.Value);
-        
+            .GetMessageAsync(@event.FeedbackMessage!.Value, cancellationToken: cancellationToken);
+
         if (@eventFeedback.FeedbackMessageId.HasValue)
         {
-            await message.Thread.ModifyMessageAsync(@eventFeedback.FeedbackMessageId.Value, x =>
-            {
-                x.Embed = feedbackEmbed;
-            });
+            await message.StartedThread!.ModifyMessageAsync(@eventFeedback.FeedbackMessageId.Value,
+                x => { x.AddEmbeds(feedbackEmbed); }, cancellationToken: cancellationToken);
         }
         else
         {
-            IUserMessage userMessage = await message.Thread.SendMessageAsync(embed: feedbackEmbed);
-            
+            var userMessage = await message.StartedThread!.SendMessageAsync(
+                new MessageProperties().AddEmbeds(feedbackEmbed), cancellationToken: cancellationToken);
+
             eventFeedback.FeedbackMessageId = userMessage.Id;
         }
 

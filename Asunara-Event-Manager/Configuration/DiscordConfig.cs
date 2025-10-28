@@ -37,9 +37,9 @@ public class DiscordConfig
 
 public class Emotes
 {
-    public string Yes { get; set; }
+    public Emoji Yes { get; set; }
     
-    public string No { get; set; }
+    public Emoji No { get; set; }
 }
 
 public class QotdConfig
@@ -117,4 +117,23 @@ public class HalloweenConfig
     public int MaxWaitTimeForScare { get; set; }
     
     public string[] AudioFiles { get; set; } = [];
+}
+
+public class Emoji
+{
+    public string Name { get; set; }
+    
+    public ulong Id { get; set; }
+    
+    public bool IsAnimated { get; set; }
+
+    public string GetDiscordString()
+    {
+        if (IsAnimated)
+        {
+            return $"<a:{Name}:{Id}>";
+        }
+        
+        return $"<:{Name}:{Id}>";
+    }
 }

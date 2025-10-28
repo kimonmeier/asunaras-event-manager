@@ -1,11 +1,11 @@
-﻿using Discord.WebSocket;
-using MediatR;
+﻿using MediatR;
+using NetCord;
 
 namespace EventManager.Events.StopTrackingVoice;
 
 public class StopTrackingVoiceEvent : IRequest
 {
-    public required SocketGuildUser DiscordUser { get; init; }
+    public required GuildUser DiscordUser { get; init; }
     
-    public required SocketGuildChannel DiscordChannel { get; init; }
+    public required IVoiceGuildChannel DiscordChannel { get; init; }
 }

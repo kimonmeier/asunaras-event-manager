@@ -1,11 +1,14 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Data.Entities.Events.QOTD;
+﻿using EventManager.Data.Entities.Events.QOTD;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
+using NetCord;
+using NetCord.Rest;
+using NetCord.Services;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Qotd;
 
-public class QotdQuestionAutocompleteHandler : AutocompleteHandler
+public class QotdQuestionAutocompleteHandler : IAutocompleteProvider<AutocompleteInteractionContext>
 {
     private readonly QotdQuestionRepository _repository;
 
@@ -14,16 +17,16 @@ public class QotdQuestionAutocompleteHandler : AutocompleteHandler
         _repository = repository;
     }
 
-    public async override Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
+    public async ValueTask<IEnumerable<ApplicationCommandOptionChoiceProperties>?> GetChoicesAsync(ApplicationCommandInteractionDataOption option, AutocompleteInteractionContext context)
     {
         List<QotdQuestion> qotdQuestions = await _repository.ListAllAsync();
 
-        List<AutocompleteResult> autocompleteResults = new List<AutocompleteResult>();
-        foreach (QotdQuestion qotdQuestion in qotdQuestions.Where(x => x.Question.Contains(autocompleteInteraction.Data.Current.Value as string ?? string.Empty, StringComparison.InvariantCultureIgnoreCase)))
+        List<ApplicationCommandOptionChoiceProperties> autocompleteResults = new List<ApplicationCommandOptionChoiceProperties>();
+        foreach (QotdQuestion qotdQuestion in qotdQuestions.Where(x => x.Question.Contains(option.Value ?? string.Empty, StringComparison.InvariantCultureIgnoreCase)))
         {
-            autocompleteResults.Add(new AutocompleteResult(qotdQuestion.Question.WithMaxLength(100), qotdQuestion.Id.ToString()));
+            autocompleteResults.Add(new ApplicationCommandOptionChoiceProperties(qotdQuestion.Question.WithMaxLength(100), qotdQuestion.Id.ToString()));
         }
         
-        return AutocompletionResult.FromSuccess(autocompleteResults.Take(25));
+        return autocompleteResults.Take(25);
     }
 }

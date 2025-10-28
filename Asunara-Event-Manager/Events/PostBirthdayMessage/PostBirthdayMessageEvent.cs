@@ -1,5 +1,4 @@
-﻿using Discord;
-using MediatR;
+﻿using MediatR;
 
 namespace EventManager.Events.PostBirthdayMessage;
 

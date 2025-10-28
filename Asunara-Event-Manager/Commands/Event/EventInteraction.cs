@@ -1,14 +1,17 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Events.AskFeedback;
+﻿using EventManager.Events.AskFeedback;
 using EventManager.Events.ForceFeedback;
+using EventManager.Extensions;
 using MediatR;
+using NetCord;
+using NetCord.Rest;
+using NetCord.Services.ApplicationCommands;
+using Sentry.Protocol;
 
 namespace EventManager.Commands.Event;
 
-[RequireUserPermission(GuildPermission.SendPolls)]
-[Group("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten")]
-public class EventInteraction : InteractionModuleBase
+[SlashCommand("events", "Diese Gruppe hat alle Befehle um mit Events zu arbeiten",
+    DefaultGuildPermissions = Permissions.SendPolls, Contexts = [InteractionContextType.Guild])]
+public class EventInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
 
@@ -17,21 +20,29 @@ public class EventInteraction : InteractionModuleBase
         _sender = sender;
     }
 
-    [SlashCommand("ask-feedback", "Startet den Feedback-Loop manuell!")]
-    public async Task AskForFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId)
+    [SubSlashCommand("ask-feedback", "Startet den Feedback-Loop manuell!")]
+    public async Task AskForFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId)
     {
+        await this.Deferred(true);
+        
         await _sender.Send(new AskFeedbackEvent()
         {
             EventId = Guid.Parse(eventId)
         });
+        
+        await this.Answer("Feedback was asked!");
     }
 
-    [SlashCommand("force-feedback", "Forced Feedback von einem User")]
-    public async Task ForceFeedback([Autocomplete(typeof(EventAutocompleteHandler))] string eventId, IUser user)
+    [SubSlashCommand("force-feedback", "Forced Feedback von einem User")]
+    public async Task ForceFeedback([SlashCommandParameter(AutocompleteProviderType = typeof(EventUncompletedAutocompleteHandler))] string eventId, GuildUser user)
     {
+        await this.Deferred();
+        
         await _sender.Send(new ForceFeedbackEvent()
         {
             EventId = Guid.Parse(eventId), User = user
         });
+
+        await this.Answer("Feedback was forced!");
     }
 }

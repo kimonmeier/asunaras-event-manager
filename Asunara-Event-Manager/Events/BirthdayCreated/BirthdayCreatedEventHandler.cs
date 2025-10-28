@@ -1,10 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Birthday;
 using EventManager.Data.Repositories;
 using MediatR;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.BirthdayCreated;
 
@@ -12,10 +13,10 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
 {
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly UserBirthdayRepository _birthdayRepository;
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
     private readonly RootConfig _config;
 
-    public BirthdayCreatedEventHandler(DbTransactionFactory dbTransactionFactory, UserBirthdayRepository birthdayRepository, DiscordSocketClient client, RootConfig config)
+    public BirthdayCreatedEventHandler(DbTransactionFactory dbTransactionFactory, UserBirthdayRepository birthdayRepository, GatewayClient client, RootConfig config)
     {
         _dbTransactionFactory = dbTransactionFactory;
         _birthdayRepository = birthdayRepository;
@@ -34,7 +35,8 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
             {
                 if (age > 60)
                 {
-                    await SendMessageToEventChat($"Der User <@{request.DiscordUserId}> ({request.DiscordUserId}) gibt bei seinem Geburtstag an über 60 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
+                    await SendMessageToEventChat(
+                        $"Der User <@{request.DiscordUserId}> ({request.DiscordUserId}) gibt bei seinem Geburtstag an über 60 zu sein! Alter: {age}, Geburtstag: {birthDay:dd.MM.yyyy}");
                 }
 
                 if (age < 16)
@@ -58,7 +60,7 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
             {
                 await SendHistoryToTeam(request.DiscordUserId);
             }
-            
+
             return true;
         }
         catch (ArgumentOutOfRangeException exception)
@@ -69,18 +71,18 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
 
     private async Task SendMessageToEventChat(string message)
     {
-        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.EventChatId);
-        await channel.SendMessageAsync(message);
+        var channel = _client.Cache.Guilds[_config.Discord.TeamDiscordServerId].Channels[_config.Discord.EventChatId] as TextGuildChannel;
+        await channel!.SendMessageAsync(message);
     }
 
     private async Task SendHistoryToTeam(ulong discordUserId)
     {
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        embedBuilder.WithAuthor("Event-Manager");
-        embedBuilder.WithColor(Color.Purple);
+        EmbedProperties embedBuilder = new EmbedProperties();
+        embedBuilder.WithAuthor(new EmbedAuthorProperties().WithName("Event-Manager"));
+        embedBuilder.WithColor(new Color(128, 0, 128));
         embedBuilder.WithTitle("Geburtstagsliste");
         embedBuilder.WithDescription($"Es gab eine merkwürdige Änderung an dem Geburtstag von dem User <@{discordUserId}>");
-        
+
         var historyByUserId = await _birthdayRepository.GetHistoryByUserId(discordUserId);
 
         // Wenn die Leute den gleichen Geburtstag eintragen einfach ignorieren!
@@ -88,13 +90,15 @@ public class BirthdayCreatedEventHandler : IRequestHandler<BirthdayCreatedEvent,
         {
             return;
         }
-        
+
         foreach (UserBirthday birthday in historyByUserId)
         {
-            embedBuilder.AddField(birthday.CreationDate.ToString("dd.MM.yyyy HH:mm 'Uhr'"), birthday.Birthday.ToString("dd.MM.yyyy"));
+            embedBuilder.AddFields(new EmbedFieldProperties()
+                .WithName(birthday.CreationDate.ToString("dd.MM.yyyy HH:mm 'Uhr'"))
+                .WithValue(birthday.Birthday.ToString("dd.MM.yyyy")));
         }
-        
-        var channel = _client.GetGuild(_config.Discord.TeamDiscordServerId).GetTextChannel(_config.Discord.Birthday.BirthdayTeamNotificationChannelId);
-        await channel.SendMessageAsync(embed: embedBuilder.Build());
+
+        var channel = _client.Cache.Guilds[_config.Discord.TeamDiscordServerId].Channels[_config.Discord.Birthday.BirthdayTeamNotificationChannelId] as TextGuildChannel;
+        await channel!.SendMessageAsync(new MessageProperties().AddEmbeds(embedBuilder));
     }
 }

@@ -1,28 +1,29 @@
 ﻿using System.Text;
-using Discord;
-using Discord.WebSocket;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Birthday;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
+using NetCord.Gateway;
 
 namespace EventManager.Events.CheckBirthday;
 
 public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 {
     private readonly UserBirthdayRepository _userBirthdayRepository;
-    private readonly DiscordSocketClient _discordSocketClient;
+    private readonly GatewayClient _discordClient;
     private readonly RootConfig _config;
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly ILogger<CheckBirthdayEventHandler> _logger;
 
-    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, DiscordSocketClient discordSocketClient, RootConfig config,
+    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, GatewayClient discordClient, RootConfig config,
         DbTransactionFactory dbTransactionFactory, ILogger<CheckBirthdayEventHandler> logger)
     {
         _userBirthdayRepository = userBirthdayRepository;
-        _discordSocketClient = discordSocketClient;
+        _discordClient = discordClient;
         _config = config;
         _dbTransactionFactory = dbTransactionFactory;
         _logger = logger;
@@ -30,8 +31,8 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
     public async Task Handle(CheckBirthdayEvent request, CancellationToken cancellationToken)
     {
-        var guild = _discordSocketClient.GetGuild(_config.Discord.MainDiscordServerId);
-        var birthdayRole = guild.GetRole(_config.Discord.Birthday.BirthdayChildRoleId);
+        var guild = _discordClient.Cache.Guilds[_config.Discord.MainDiscordServerId];
+        var birthdayRole = guild.Roles[_config.Discord.Birthday.BirthdayChildRoleId];
         var birthdayChannel = guild.GetTextChannel(_config.Discord.Birthday.ChannelId);
 
         await ClearBirthdayChannel(birthdayChannel);
@@ -41,7 +42,7 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
         if (currentBirthdays.Count == 0)
         {
-            await birthdayChannel.SendMessageAsync("Leider gibt es heute keine Geburtstage!");
+            await birthdayChannel.SendMessageAsync("Leider gibt es heute keine Geburtstage!", cancellationToken: cancellationToken);
 
             return;
         }
@@ -65,9 +66,9 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
                 : $"{birthday.Birthday.GetAge()} Jahre alt";
             var line = $"- <@{birthday.DiscordId}> - {ageString}";
 
-            SocketGuildUser socketGuildUser = guild.GetUser(birthday.DiscordId);
+            GuildUser guildUser = guild.Users[birthday.DiscordId];
 
-            if (socketGuildUser.Roles.Any(x => x.Id == _config.Discord.Comfort.ComfortRoleId))
+            if (guildUser.RoleIds.Any(x => x == _config.Discord.Comfort.ComfortRoleId))
             {
                 comfortBuilder.AppendLine(line);
                 hasComfort = true;
@@ -80,26 +81,26 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         comfortBuilder.AppendLine($"|| <@&{_config.Discord.Comfort.ComfortRoleId}> ||");
         builder.AppendLine($"|| <@&{_config.Discord.Birthday.BirthdayNotificationRoleId}> ||");
 
-        await birthdayChannel.SendMessageAsync(builder.ToString());
+        await birthdayChannel.SendMessageAsync(builder.ToString(), cancellationToken: cancellationToken);
 
-        await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString());
+        await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString(), cancellationToken: cancellationToken);
         if (hasComfort)
         {
-            await guild.GetTextChannel(_config.Discord.Comfort.ChannelId).SendMessageAsync(comfortBuilder.ToString());
+            await guild.GetTextChannel(_config.Discord.Comfort.ChannelId).SendMessageAsync(comfortBuilder.ToString(), cancellationToken: cancellationToken);
         }
     }
 
-    private async Task RemoveBirthdayRoleOnOldUsers(SocketRole birthdayRole)
+    private async Task RemoveBirthdayRoleOnOldUsers(Role birthdayRole)
     {
-        foreach (SocketGuildUser roleMember in birthdayRole.Members)
+        foreach (GuildUser roleMember in birthdayRole.GetUser(_discordClient))
         {
-            await roleMember.RemoveRoleAsync(birthdayRole);
+            await roleMember.RemoveRoleAsync(birthdayRole.Id);
         }
     }
 
-    private async Task ClearBirthdayChannel(SocketTextChannel birthdayChannel)
+    private async Task ClearBirthdayChannel(TextChannel birthdayChannel)
     {
-        IEnumerable<IMessage> messages = await birthdayChannel.GetMessagesAsync(_config.Discord.Birthday.AnnouncementMessageId, Direction.After, 1000).FlattenAsync();
+        var messages = await birthdayChannel.GetMessagesAroundAsync( _config.Discord.Birthday.AnnouncementMessageId);
 
         foreach (var message in messages)
         {
@@ -107,19 +108,19 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         }
     }
     
-    private async Task CheckBirthdaysAndExistingUser(SocketGuild guild, List<UserBirthday> birthdays, CancellationToken cancellationToken)
+    private async Task CheckBirthdaysAndExistingUser(Guild guild, List<UserBirthday> birthdays, CancellationToken cancellationToken)
     {
-        SocketRole birthdayRole = guild.GetRole(_config.Discord.Birthday.BirthdayChildRoleId);
+        Role birthdayRole = guild.Roles[_config.Discord.Birthday.BirthdayChildRoleId];
 
         for (int i = 0; i < birthdays.Count; i++)
         {
             var birthday = birthdays[i];
             
-            SocketGuildUser socketGuildUser = guild.GetUser(birthday.DiscordId);
+            GuildUser? socketGuildUser = guild.Users.GetValueOrDefault(birthday.DiscordId);
 
             if (socketGuildUser is not null)
             {
-                await socketGuildUser.AddRoleAsync(birthdayRole);
+                await socketGuildUser.AddRoleAsync(birthdayRole.Id, cancellationToken: cancellationToken);
                 
                 continue;
             }

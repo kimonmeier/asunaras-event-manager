@@ -1,25 +1,27 @@
-﻿using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Activity;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
+using NetCord.Gateway;
 
 namespace EventManager.Events.CheckVoiceActivityForChannel;
 
 public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoiceActivityForChannelEvent>
 {
-    private readonly DiscordSocketClient _discordSocketClient;
+    private readonly GatewayClient _discordClient;
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly ActivityEventRepository _activityEventRepository;
     private readonly RootConfig _rootConfig;
     private readonly ILogger<CheckVoiceActivityForChannelEventHandler> _logger;
 
-    public CheckVoiceActivityForChannelEventHandler(DiscordSocketClient discordSocketClient, DbTransactionFactory dbTransactionFactory, ActivityEventRepository activityEventRepository,
+    public CheckVoiceActivityForChannelEventHandler(GatewayClient discordClient, DbTransactionFactory dbTransactionFactory, ActivityEventRepository activityEventRepository,
         RootConfig rootConfig, ILogger<CheckVoiceActivityForChannelEventHandler> logger)
     {
-        _discordSocketClient = discordSocketClient;
+        _discordClient = discordClient;
         _dbTransactionFactory = dbTransactionFactory;
         _activityEventRepository = activityEventRepository;
         _rootConfig = rootConfig;
@@ -35,9 +37,9 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
             return;
         }
 
-        SocketGuild guild = _discordSocketClient.GetGuild(_rootConfig.Discord.MainDiscordServerId);
+        Guild guild = _discordClient.Cache.Guilds[_rootConfig.Discord.MainDiscordServerId];
 
-        SocketGuildChannel guildChannel = guild.GetChannel(request.ChannelId);
+        IGuildChannel guildChannel = guild.Channels[request.ChannelId];
 
         if (guildChannel is null)
         {
@@ -45,14 +47,14 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
             return;
         }
         
-        List<SocketGuildUser> users;
-        if (guildChannel is SocketStageChannel stageChannel)
+        List<VoiceState> users;
+        if (guildChannel is VoiceGuildChannel stageChannel)
         {
-            users = stageChannel.ConnectedUsers.ToList();
+            users = stageChannel.GetConnectedUsers(_discordClient);
         }
-        else if (guildChannel is SocketVoiceChannel voiceChannel)
+        else if (guildChannel is StageGuildChannel voiceChannel)
         {
-            users = voiceChannel.ConnectedUsers.ToList();
+            users = voiceChannel.GetConnectedUsers(_discordClient);
         } 
         else
         {
@@ -75,16 +77,8 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         // If all Users are Muted
         if (users.All(x => x.IsMuted || x.IsSelfMuted))
         {
-            _logger.LogDebug("All Users are Muted");
-
-            if (!users.Any(x => x.Activities.Any(activity => _rootConfig.Discord.Activity.AllowedActivities.Contains(activity.Name)))) {
-                _logger.LogDebug("All Users are Muted and no activity is allowed");
-                await MarkUserInactive(guildChannel.Id, users, cancellationToken);
-
-                return;
-            }
-            
-            _logger.LogDebug("There is at least one User that is allowed to be active");
+            _logger.LogDebug("All Users are Muted and no activity is allowed");
+            await MarkUserInactive(guildChannel.Id, users, cancellationToken);
         }
 
         // If only one User is in the Channel
@@ -101,13 +95,13 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         await MarkUserActive(guildChannel.Id, users, cancellationToken);
     }
 
-    private async Task MarkUserInactive(ulong channelId, IList<SocketGuildUser> users, CancellationToken cancellationToken = default)
+    private async Task MarkUserInactive(ulong channelId, IList<VoiceState> voiceStates, CancellationToken cancellationToken = default)
     {
         Transaction transaction = await _dbTransactionFactory.CreateTransaction();
 
-        foreach (var user in users)
+        foreach (var voiceState in voiceStates)
         {
-            var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(user.Id);
+            var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(voiceState.UserId);
 
             if (lastEntry is null)
             {
@@ -121,20 +115,20 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
             await _activityEventRepository.AddAsync(new ActivityEvent()
             {
-                Type = ActivityType.VoiceChannelAfk, Date = DateTime.UtcNow, DiscordUserId = user.Id, ChannelId = channelId
+                Type = ActivityType.VoiceChannelAfk, Date = DateTime.UtcNow, DiscordUserId = voiceState.UserId, ChannelId = channelId
             });
         }
 
         await transaction.Commit(cancellationToken);
     }
 
-    private async Task MarkUserActive(ulong channelId, IList<SocketGuildUser> users, CancellationToken cancellationToken = default)
+    private async Task MarkUserActive(ulong channelId, IList<VoiceState> voiceStates, CancellationToken cancellationToken = default)
     {
         Transaction transaction = await _dbTransactionFactory.CreateTransaction();
 
-        foreach (var user in users)
+        foreach (var voiceState in voiceStates)
         {
-            var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(user.Id);
+            var lastEntry = await _activityEventRepository.GetLastVoiceActivityByDiscordId(voiceState.UserId);
 
             if (lastEntry?.Type is not ActivityType.VoiceChannelAfk)
             {
@@ -143,7 +137,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
             await _activityEventRepository.AddAsync(new ActivityEvent()
             {
-                Type = ActivityType.VoiceChannelNonAfk, Date = DateTime.UtcNow, DiscordUserId = user.Id, ChannelId = channelId
+                Type = ActivityType.VoiceChannelNonAfk, Date = DateTime.UtcNow, DiscordUserId = voiceState.UserId, ChannelId = channelId
             });
         }
 

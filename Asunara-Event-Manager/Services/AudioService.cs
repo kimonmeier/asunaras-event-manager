@@ -1,18 +1,18 @@
 ﻿using System.ComponentModel;
-using Discord.Audio;
-using Discord.WebSocket;
+using NetCord.Gateway;
+using NetCord.Gateway.Voice;
 
 namespace EventManager.Services;
 
-public class AudioService
+public class AudioService(GatewayClient client)
 {
-    private IAudioClient? _audioClient;
-    private SocketVoiceChannel? _audioChannel;
+    private VoiceClient? _voiceClient;
+    private ulong? _audioChannelId;
     private bool _isPlaying;
 
     public async Task PlayAudioAsync(string url)
     {
-        if (_audioClient is null)
+        if (_voiceClient is null)
         {
             throw new InvalidAsynchronousStateException("There is no audio client connected");
         }
@@ -23,46 +23,55 @@ public class AudioService
         }
         
         _isPlaying = true;
+
+        if (_voiceClient.Status == WebSocketStatus.Disconnected)
+        {
+            await _voiceClient.StartAsync();
+        }
+
+        await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone));
         
         await using var fileStream = File.OpenRead(url);
-        await using AudioOutStream audioStream = _audioClient.CreatePCMStream(AudioApplication.Music);
-        await fileStream.CopyToAsync(audioStream);
-        await audioStream.FlushAsync();
         
-        await _audioClient.SetSpeakingAsync(false);
+        await using Stream audioStream = _voiceClient.CreateOutputStream();
+        await using OpusEncodeStream stream = new(audioStream, PcmFormat.Short, VoiceChannels.Stereo, OpusApplication.Audio);
+        await fileStream.CopyToAsync(stream);
+        await stream.FlushAsync();
+        
         _isPlaying = false;
     }
 
-    public async Task ConnectToVoiceChannelAsync(SocketVoiceChannel channel)
+    public async Task ConnectToVoiceChannelAsync(ulong guildId, ulong channelId)
     {
-        _audioClient = await channel.ConnectAsync(selfDeaf: true);
-        _audioChannel = channel;
+        _voiceClient = await client.JoinVoiceChannelAsync(guildId, channelId);
+        _audioChannelId = channelId;
     }
-    
+
     public async Task DisconnectFromVoiceChannelAsync()
     {
-        if (_audioClient is null)
+        if (_voiceClient is null)
         {
             return;
         }
-        
-        await _audioClient.StopAsync();
+
         try
         {
-            await _audioChannel!.DisconnectAsync();
+            await _voiceClient.CloseAsync();
         }
-        catch (Exception)
+        catch (Exception _)
         {
-            // ignored
-        }
+            
+        }// ignored
 
-        _audioChannel = null;
-        _audioClient.Dispose();
-        _audioClient = null;
+        await client.UpdateVoiceStateAsync(new VoiceStateProperties(_voiceClient.GuildId, null));
+
+        _audioChannelId = null;
+        _voiceClient.Dispose();
+        _voiceClient = null;
     }
     
-    public SocketVoiceChannel? GetConnectedVoiceChannel()
+    public ulong? GetConnectedVoiceChannelId()
     {
-        return _audioChannel;
+        return _audioChannelId;
     }
 }

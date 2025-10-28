@@ -1,16 +1,18 @@
-﻿using Discord;
-using Discord.WebSocket;
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
+using EventManager.Extensions;
 using MediatR;
+using NetCord;
+using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.PostBirthdayMessage;
 
 public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessageEvent>
 {
     private readonly RootConfig _rootConfig;
-    private readonly DiscordSocketClient _client;
+    private readonly GatewayClient _client;
 
-    public PostBirthdayMessageEventHandler(RootConfig rootConfig, DiscordSocketClient client)
+    public PostBirthdayMessageEventHandler(RootConfig rootConfig, GatewayClient client)
     {
         _rootConfig = rootConfig;
         _client = client;
@@ -18,23 +20,39 @@ public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessa
 
     public async Task Handle(PostBirthdayMessageEvent request, CancellationToken cancellationToken)
     {
-        EmbedBuilder builder = new EmbedBuilder()
+        // TODO: Emoji refactor
+        EmbedProperties builder = new EmbedProperties()
             .WithTitle("Geburtstage")
             .WithDescription("Hier kannst du dein Geburtstag verwalten!")
-            .WithAuthor(new EmbedAuthorBuilder()
+            .WithAuthor(new EmbedAuthorProperties()
             {
                 Name = "Midnight-Café Event-Bot"
             })
-            .AddField(_rootConfig.Discord.Emote.Yes, "Hiermit kannst du deinen Geburtstag setzen und/oder ändern")
-            .AddField(_rootConfig.Discord.Emote.No, "Hiermit kannst du deinen Geburtstag löschen")
-            .WithColor(Color.DarkBlue);
-        
-        ComponentBuilder componentBuilder = new ComponentBuilder()
-            .AddRow(new ActionRowBuilder()
-                .WithButton(" ", Konst.ButtonBirthdayRegister, ButtonStyle.Primary, Emote.Parse(_rootConfig.Discord.Emote.Yes))
-                .WithButton(" ", Konst.ButtonBirthdayDelete, ButtonStyle.Secondary, Emote.Parse(_rootConfig.Discord.Emote.No)));
+            .AddFields(new EmbedFieldProperties()
+            {
+                Name = _rootConfig.Discord.Emote.Yes.GetDiscordString(),
+                Value = "Hiermit kannst du deinen Geburtstag setzen und/oder ändern"
+            })
+            .AddFields(new EmbedFieldProperties()
+            {
+                Name = _rootConfig.Discord.Emote.Yes.GetDiscordString(),
+                Value = "Hiermit kannst du deinen Geburtstag löschen"
+            })
+            .WithColor(new Color(0, 100, 255));
 
+        ActionRowProperties rowProperties = new ActionRowProperties()
+            .AddComponents([
+                new ButtonProperties(Konst.ButtonBirthdayRegister,
+                    EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes.Id), ButtonStyle.Primary),
+                new ButtonProperties(Konst.ButtonBirthdayDelete, EmojiProperties.Custom(_rootConfig.Discord.Emote.No.Id),
+                    ButtonStyle.Secondary)
+            ]);
 
-        await _client.GetGuild(_rootConfig.Discord.MainDiscordServerId).GetTextChannel(request.TextChannelId).SendMessageAsync(embed: builder.Build(), components: componentBuilder.Build());
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.AddEmbeds(builder);
+        messageProperties.AddComponents(rowProperties);
+
+        await _client.Cache.Guilds[_rootConfig.Discord.MainDiscordServerId].GetTextChannel(request.TextChannelId)
+            .SendMessageAsync(messageProperties, cancellationToken: cancellationToken);
     }
 }

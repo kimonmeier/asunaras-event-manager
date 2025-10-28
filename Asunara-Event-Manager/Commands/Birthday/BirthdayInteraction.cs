@@ -1,13 +1,14 @@
-﻿using Discord;
-using Discord.Interactions;
-using EventManager.Events.PostBirthdayMessage;
+﻿using EventManager.Events.PostBirthdayMessage;
+using EventManager.Extensions;
 using MediatR;
+using NetCord;
+using NetCord.Services.ApplicationCommands;
 
 namespace EventManager.Commands.Birthday;
 
-[RequireUserPermission(GuildPermission.SendPolls)]
-[Group("birthday", "Gibt die Möglichkeit die Geburtstag einzusehen")]
-public class BirthdayInteraction : InteractionModuleBase
+[SlashCommand("birthday", "Gibt die Möglichkeit die Geburtstag einzusehen",
+    DefaultGuildPermissions = Permissions.SendPolls, Contexts = [InteractionContextType.Guild])]
+public class BirthdayInteraction : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly ISender _sender;
 
@@ -17,14 +18,16 @@ public class BirthdayInteraction : InteractionModuleBase
     }
 
     
-    [SlashCommand("post-message", "Postet die Nachricht für die Verwaltung der Geburtstage")]
+    [SubSlashCommand("post-message", "Postet die Nachricht für die Verwaltung der Geburtstage")]
     public async Task PostBirthdayMessage(string channelId)
     {
+        await this.Deferred(true);
+        
         await _sender.Send(new PostBirthdayMessageEvent()
         {
             TextChannelId = ulong.Parse(channelId)
         });
+        
+        await this.Answer("The Message was sent!");
     }
-    
-    
 }
