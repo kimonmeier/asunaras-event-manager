@@ -17,7 +17,7 @@ public class OnGuildJoinedEvent(
 {
     public async ValueTask HandleAsync(GuildCreateEventArgs arg)
     {
-        if (arg.GuildId != config.Discord.MainDiscordServerId && arg.GuildId != config.Discord.MainDiscordServerId)
+        if (arg.GuildId != config.Discord.MainDiscordServerId && arg.GuildId != config.Discord.TeamDiscordServerId)
         {
             await HandleLeave(arg.Guild);
             return;
