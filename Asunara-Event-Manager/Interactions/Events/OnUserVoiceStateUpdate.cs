@@ -80,6 +80,6 @@ public class OnUserVoiceStateUpdate(
         }
 
         await audioService.DisconnectFromVoiceChannelAsync();
-        await audioService.ConnectToVoiceChannelAsync(currentVoiceState.GuildId, currentVoiceState.ChannelId.Value);
+        await audioService.ConnectToVoiceChannelAsync(prevVoiceState.GuildId, prevVoiceState.ChannelId.Value);
     }
 }
