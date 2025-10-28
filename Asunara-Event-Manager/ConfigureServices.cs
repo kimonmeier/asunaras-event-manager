@@ -94,11 +94,11 @@ public static class ConfigureServices
 
     private static void AddServices(this IServiceCollection services)
     {
-        services.AddSingleton<DiscordService>();
         services.AddSingleton<EventParticipantService>();
         services.AddSingleton<EventReminderService>();
         services.AddSingleton<AudioService>();
         services.AddSingleton<HalloweenService>();
+        services.AddSingleton<VoiceStateHistoryService>();
     }
 
     private static void AddPipeline(this IServiceCollection services)

@@ -5,8 +5,10 @@ namespace EventManager.Events.MemberAddedEvent;
 
 public class MemberAddedEventEvent : IRequest
 {
-    public required GuildUser User { get; init; }
+    public required ulong GuildId { get; set; }
     
-    public required GuildScheduledEvent Event { get; init; }
+    public required ulong UserId { get; init; }
+    
+    public required ulong EventId { get; init; }
     
 }

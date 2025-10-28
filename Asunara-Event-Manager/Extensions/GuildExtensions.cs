@@ -16,4 +16,16 @@ public static class GuildExtensions
 
         return textChannel;
     }
+
+    public static VoiceGuildChannel GetVoiceGuildChannel(this Guild guild, ulong channelId)
+    {
+        IGuildChannel channel = guild.Channels[channelId];
+
+        if (channel is not VoiceGuildChannel voiceGuildChannel)
+        {
+            throw new InvalidCastException();
+        }
+
+        return voiceGuildChannel;
+    }
 }
