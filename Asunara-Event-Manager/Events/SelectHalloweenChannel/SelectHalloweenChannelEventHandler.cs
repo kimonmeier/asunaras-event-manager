@@ -61,7 +61,6 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
 
         IScheduler scheduler = await _schedulerFactory
             .GetScheduler(cancellationToken);
-        await scheduler.Start(cancellationToken);
         if (channelToScare is null)
         {
             ITrigger trigger = TriggerBuilder
