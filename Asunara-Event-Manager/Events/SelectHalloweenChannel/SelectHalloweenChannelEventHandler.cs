@@ -66,7 +66,7 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
             ITrigger trigger = TriggerBuilder
                 .Create()
                 .ForJob(JobKey.Create(nameof(SelectHalloweenChannelJob)))
-                .StartAt(DateTimeOffset.Now.AddMinutes(15))
+                .StartAt(DateTimeOffset.Now.AddMinutes(Random.Shared.Next(5, 300)))
                 .Build();
 
             await scheduler
