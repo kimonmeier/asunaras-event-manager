@@ -30,12 +30,12 @@ public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessa
             })
             .AddFields(new EmbedFieldProperties()
             {
-                Name = EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes).ToString(),
+                Name = _rootConfig.Discord.Emote.Yes.GetDiscordString(),
                 Value = "Hiermit kannst du deinen Geburtstag setzen und/oder ändern"
             })
             .AddFields(new EmbedFieldProperties()
             {
-                Name = EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes).ToString(),
+                Name = _rootConfig.Discord.Emote.Yes.GetDiscordString(),
                 Value = "Hiermit kannst du deinen Geburtstag löschen"
             })
             .WithColor(new Color(0, 100, 255));
@@ -43,8 +43,8 @@ public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessa
         ActionRowProperties rowProperties = new ActionRowProperties()
             .AddComponents([
                 new ButtonProperties(Konst.ButtonBirthdayRegister,
-                    EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes), ButtonStyle.Primary),
-                new ButtonProperties(Konst.ButtonBirthdayDelete, EmojiProperties.Custom(_rootConfig.Discord.Emote.No),
+                    EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes.Id), ButtonStyle.Primary),
+                new ButtonProperties(Konst.ButtonBirthdayDelete, EmojiProperties.Custom(_rootConfig.Discord.Emote.No.Id),
                     ButtonStyle.Secondary)
             ]);
 

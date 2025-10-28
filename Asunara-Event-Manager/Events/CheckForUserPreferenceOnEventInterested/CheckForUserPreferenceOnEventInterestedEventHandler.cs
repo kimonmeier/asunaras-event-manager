@@ -62,9 +62,9 @@ public class
 
         reminderMessage.AddComponents(new ActionRowProperties()
             .AddComponents(new ButtonProperties(Konst.ButtonReminderYes,
-                EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes), ButtonStyle.Secondary))
+                EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes.Id), ButtonStyle.Secondary))
             .AddComponents(new ButtonProperties(Konst.ButtonReminderNo,
-                EmojiProperties.Custom(_rootConfig.Discord.Emote.No), ButtonStyle.Secondary)));
+                EmojiProperties.Custom(_rootConfig.Discord.Emote.No.Id), ButtonStyle.Secondary)));
 
         MessageProperties eventFeedbackMessage = new MessageProperties();
         eventFeedbackMessage.Content =
@@ -72,9 +72,9 @@ public class
 
         reminderMessage.AddComponents(new ActionRowProperties()
             .AddComponents(new ButtonProperties(Konst.ButtonFeedbackYes,
-                EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes), ButtonStyle.Secondary))
+                EmojiProperties.Custom(_rootConfig.Discord.Emote.Yes.Id), ButtonStyle.Secondary))
             .AddComponents(new ButtonProperties(Konst.ButtonFeedbackNo,
-                EmojiProperties.Custom(_rootConfig.Discord.Emote.No), ButtonStyle.Secondary)));
+                EmojiProperties.Custom(_rootConfig.Discord.Emote.No.Id), ButtonStyle.Secondary)));
 
         await dmChannel.SendMessageAsync(reminderMessage);
         await dmChannel.SendMessageAsync(eventFeedbackMessage);
