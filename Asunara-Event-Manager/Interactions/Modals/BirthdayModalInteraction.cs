@@ -1,4 +1,5 @@
 using EventManager.Events.BirthdayCreated;
+using EventManager.Extensions;
 using MediatR;
 using NetCord;
 using NetCord.Services.ComponentInteractions;
@@ -10,23 +11,25 @@ public class BirthdayModalInteraction(ISender sender) : ComponentInteractionModu
     [ComponentInteraction(Konst.Modal.Birthday.Id)]
     public async Task CreateBirthday()
     {
+        await this.Deferred(true);
+        
         ulong userId = Context.User.Id;
 
-        var dayInputString = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.DayInputId).Value;
+        var dayInputString = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.DayInputId).Value;
         if (!int.TryParse(dayInputString, out int dayInput))
         {
             await Context.Interaction.SendFollowupMessageAsync("Bitte gib einen gültigen Tag ein!");
             return;
         }
 
-        var monthInputString = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.MonthInputId).Value;
+        var monthInputString = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.MonthInputId).Value;
         if (!int.TryParse(monthInputString, out int monthInput))
         {
             await Context.Interaction.SendFollowupMessageAsync("Bitte gib einen gültigen Monat ein!");
             return;
         }
 
-        var yearInputString = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.YearInputId).Value;
+        var yearInputString = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Birthday.YearInputId).Value;
         int? yearInput = null;
         if (!string.IsNullOrEmpty(yearInputString))
         {
@@ -47,11 +50,11 @@ public class BirthdayModalInteraction(ISender sender) : ComponentInteractionModu
 
         if (success)
         {
-            await Context.Interaction.SendFollowupMessageAsync("Dein Geburtstag wurde erfolgreich erstellt!");
+            await this.Answer("Dein Geburtstag wurde erfolgreich erstellt!");
         }
         else
         {
-            await Context.Interaction.SendFollowupMessageAsync("Dein Geburtstag konnte nicht erstellt werden. Bitte versuche es mit korrekten Eingaben erneut!");
+            await this.Answer("Dein Geburtstag konnte nicht erstellt werden. Bitte versuche es mit korrekten Eingaben erneut!");
         }
     }
 }

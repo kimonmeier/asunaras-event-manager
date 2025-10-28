@@ -1,4 +1,5 @@
 using EventManager.Events.BirthdayDelete;
+using EventManager.Extensions;
 using MediatR;
 using NetCord.Rest;
 using NetCord.Services.ComponentInteractions;
@@ -13,8 +14,8 @@ public class BirthdayButtonInteraction(ISender sender) : ComponentInteractionMod
         ModalProperties modalProperties = new ModalProperties(Konst.Modal.Birthday.Id, "Geburstag erfassen/ändern");
         modalProperties.AddComponents([
             new LabelProperties("Tag", new TextInputProperties(Konst.Modal.Birthday.DayInputId, TextInputStyle.Short).WithRequired()),
-            new LabelProperties("Monat", new TextInputProperties(Konst.Modal.Birthday.DayInputId, TextInputStyle.Short).WithRequired()),
-            new LabelProperties("Jahr (optional)", new TextInputProperties(Konst.Modal.Birthday.DayInputId, TextInputStyle.Short))
+            new LabelProperties("Monat", new TextInputProperties(Konst.Modal.Birthday.MonthInputId, TextInputStyle.Short).WithRequired()),
+            new LabelProperties("Jahr (optional)", new TextInputProperties(Konst.Modal.Birthday.YearInputId, TextInputStyle.Short).WithRequired(false))
         ]);
 
         await Context.Interaction.SendResponseAsync(InteractionCallback.Modal(modalProperties));
@@ -23,16 +24,13 @@ public class BirthdayButtonInteraction(ISender sender) : ComponentInteractionMod
     [ComponentInteraction(Konst.ButtonBirthdayDelete)]
     public async Task DeleteBirthday()
     {
+        await this.Deferred(true);
+        
         await sender.Send(new BirthdayDeleteEvent()
         {
             DiscordUserId = Context.User.Id
         });
 
-        await SendResponses();
-    }
-
-    private async Task SendResponses()
-    {
-        await Context.Interaction.SendResponseAsync(InteractionCallback.Message("Dein Wunsch wurde registriert!"));
+        await this.Answer("Dein Geburtstag wurde erfolgreich gelöscht!");
     }
 }
