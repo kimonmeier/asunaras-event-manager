@@ -41,16 +41,25 @@ public class AudioService(GatewayClient client)
         _voiceClient = await client.JoinVoiceChannelAsync(guildId, channelId);
         _audioChannelId = channelId;
     }
-    
+
     public async Task DisconnectFromVoiceChannelAsync()
     {
         if (_voiceClient is null)
         {
             return;
         }
-        
-        await _voiceClient.CloseAsync();
-        
+
+        try
+        {
+            await _voiceClient.CloseAsync();
+        }
+        catch (Exception _)
+        {
+            
+        }// ignored
+
+        await client.UpdateVoiceStateAsync(new VoiceStateProperties(_voiceClient.GuildId, null));
+
         _audioChannelId = null;
         _voiceClient.Dispose();
         _voiceClient = null;
