@@ -61,6 +61,7 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
 
         IScheduler scheduler = await _schedulerFactory
             .GetScheduler(cancellationToken);
+        await scheduler.Start(cancellationToken);
         if (channelToScare is null)
         {
             ITrigger trigger = TriggerBuilder
@@ -87,7 +88,7 @@ public class SelectHalloweenChannelEventHandler : IRequestHandler<SelectHallowee
         ITrigger triggerPlayHalloween = TriggerBuilder
             .Create()
             .ForJob(JobKey.Create(nameof(PlayHalloweenScareJob)))
-            .StartAt(DateTimeOffset.Now.AddMinutes(timeToWait))
+            .StartAt(DateBuilder.FutureDate(timeToWait, IntervalUnit.Minute))
             .Build();
 
         await scheduler
