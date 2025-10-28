@@ -23,15 +23,20 @@ public class AudioService(GatewayClient client)
         }
         
         _isPlaying = true;
-        
-        await _voiceClient.StartAsync();
+
+        if (_voiceClient.Status == WebSocketStatus.Disconnected)
+        {
+            await _voiceClient.StartAsync();
+        }
+
         await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone));
         
         await using var fileStream = File.OpenRead(url);
         
         await using Stream audioStream = _voiceClient.CreateOutputStream();
-        await fileStream.CopyToAsync(audioStream);
-        await audioStream.FlushAsync();
+        await using OpusEncodeStream stream = new(audioStream, PcmFormat.Short, VoiceChannels.Stereo, OpusApplication.Audio);
+        await fileStream.CopyToAsync(stream);
+        await stream.FlushAsync();
         
         _isPlaying = false;
     }
