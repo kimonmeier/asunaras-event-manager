@@ -31,11 +31,6 @@ builder.Services.AddEventManagerServices(builder.Configuration);
 
 using IHost host = builder.Build();
 
-// Start the scheduler
-ISchedulerFactory factory = host.Services.GetRequiredService<ISchedulerFactory>();
-IScheduler scheduler = await factory.GetScheduler();
-await scheduler.Start();
-
 // Add component interactions using minimal APIs
 host.AddComponentInteraction<ButtonInteractionContext>("ping", () => "Pong!");
 host.AddComponentInteraction<StringMenuInteractionContext>("string", (StringMenuInteractionContext context) => string.Join("\n", context.SelectedValues));
