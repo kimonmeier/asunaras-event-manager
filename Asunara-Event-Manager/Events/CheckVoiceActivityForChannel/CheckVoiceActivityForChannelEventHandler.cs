@@ -44,9 +44,10 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         if (guildChannel is null)
         {
             _logger.LogWarning("Could not find channel with id {ChannelId}", request.ChannelId);
+
             return;
         }
-        
+
         List<VoiceState> users;
         if (guildChannel is VoiceGuildChannel stageChannel)
         {
@@ -55,7 +56,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
         else if (guildChannel is StageGuildChannel voiceChannel)
         {
             users = voiceChannel.GetConnectedUsers(_discordClient);
-        } 
+        }
         else
         {
             throw new Exception($"Unknown Channel Type for Channel {request.ChannelId} with type {guildChannel.GetType().FullName}");
@@ -89,7 +90,7 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
             return;
         }
-        
+
         _logger.LogDebug("There are more than one User in the Channel");
         // Otherwise mark Users as active!
         await MarkUserActive(guildChannel.Id, users, cancellationToken);

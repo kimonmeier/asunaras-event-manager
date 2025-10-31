@@ -7,5 +7,5 @@ public class MemberJoinedChannelEvent : IRequest
 {
     public required GuildUser User { get; init; }
     
-    public required VoiceGuildChannel Channel { get; init; }
+    public required IVoiceGuildChannel Channel { get; init; }
 }

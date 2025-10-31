@@ -3,6 +3,7 @@ using EventManager.Data.Repositories;
 using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.CheckFskRestrictionOnUser;
 using EventManager.Events.CheckVoiceActivityForChannel;
+using EventManager.Events.EventDeleted;
 using EventManager.Events.StartTrackingVoice;
 using EventManager.Services;
 using MediatR;
@@ -44,6 +45,16 @@ public class MemberJoinedChannelEventHandler : IRequestHandler<MemberJoinedChann
         var guildId = request.Channel.GuildId;
         var guild = _gatewayClient.Cache.Guilds[guildId];
         var events = await _discordEventRepository.GetAllUncompleted();
+
+        foreach (var deletedEvent in events.Where(x => !guild.ScheduledEvents.ContainsKey(x.DiscordId)).ToList())
+        {
+            await _sender.Send(new EventDeletedEvent()
+            {
+                DiscordId = deletedEvent.DiscordId
+            }, cancellationToken);
+            
+            events.Remove(deletedEvent);
+        }
         
         DiscordEvent? @event = events.SingleOrDefault(x => guild.ScheduledEvents[x.DiscordId].Status == GuildScheduledEventStatus.Active);
 

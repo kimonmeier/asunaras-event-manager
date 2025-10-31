@@ -17,16 +17,19 @@ public static class GuildExtensions
         return textChannel;
     }
 
-    public static VoiceGuildChannel GetVoiceGuildChannel(this Guild guild, ulong channelId)
+    public static IVoiceGuildChannel GetVoiceGuildChannel(this Guild guild, ulong channelId)
     {
         IGuildChannel channel = guild.Channels[channelId];
 
-        if (channel is not VoiceGuildChannel voiceGuildChannel)
+        if (channel is VoiceGuildChannel voiceGuildChannel)
         {
-            throw new InvalidCastException();
+            return voiceGuildChannel;
+        } else if (channel is StageGuildChannel stageGuildChannel)
+        {
+            return stageGuildChannel;
         }
-
-        return voiceGuildChannel;
+        
+        throw new InvalidCastException();
     }
 
     public static IEnumerable<GuildUser> GetConnectedUsers(this Guild guild, ulong voiceChannelId)
