@@ -11,7 +11,7 @@ public class HalloweenService
         
         foreach (ulong user in users)
         {
-            if (_halloweenUsers.ContainsKey(user))
+            if (!_halloweenUsers.ContainsKey(user))
             {
                 _halloweenUsers.Add(user, DateTime.UtcNow);
                 continue;
