@@ -14,6 +14,7 @@ public static class SentryService
             x.SampleRate = config.Sentry.SampleRate;
             x.TracesSampleRate = config.Sentry.TraceSampleRate;
             x.ProfilesSampleRate = config.Sentry.ProfilingSampleRate;
+            x.Release = typeof(Program).Assembly.GetName().Version?.ToString();
 
 #if DEBUG
             x.Debug = false;
