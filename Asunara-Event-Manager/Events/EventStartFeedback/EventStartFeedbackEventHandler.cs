@@ -134,16 +134,16 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
                 $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}2{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}13{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}4{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐",
                 ButtonStyle.Primary))
             .AddComponents(new ButtonProperties(
-                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}1{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐⭐",
+                $"{Konst.ButtonFeedbackStar}{Konst.PayloadDelimiter}5{Konst.PayloadDelimiter}{discordEvent.DiscordId}", "⭐⭐⭐⭐⭐",
                 ButtonStyle.Primary)));
 
         try
