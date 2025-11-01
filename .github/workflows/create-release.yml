@@ -1,0 +1,47 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main  # Trigger for main branch push
+    
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read      # to checkout the code
+  packages: write     # to push Docker images to GitHub Packages (ghcr.io)
+
+  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore Dotnet Tool
+      run: dotnet tool restore
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build application
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Update Release
+      run: dotnet tool run dotnet-version increment-version-with-git-hints -g "." -b "main"
+
+    # to push the commit created
+    - run: git push
+      if: always()
+    # to push the tags created
+    - run: git push --tags
+      if: always()
