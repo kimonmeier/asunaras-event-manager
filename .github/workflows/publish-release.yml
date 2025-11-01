@@ -15,7 +15,6 @@ permissions:
 jobs:
   update-version-and-push:
     runs-on: windows-latest
-    allow_failure: true
     
     steps:
       - name: Checkout code
@@ -33,13 +32,12 @@ jobs:
   
       - name: Update Release
         run: dotnet tool run dotnet-version increment-version-with-git-hints -g "." -b "main"
+        continue-on-error: true
       
       # to push the commit created
       - run: git push
-        if: always()
       # to push the tags created
       - run: git push --tags
-        if: always()
     
   build-and-push:
     runs-on: ubuntu-latest
