@@ -152,8 +152,7 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
         }
         catch (Exception exception)
         {
-            SentrySdk.CaptureException(exception);
-            _logger.LogError("The User {0} has DM's disabled!", userId);
+            _logger.LogWarning("The User {0} has DM's disabled!", userId);
         }
     }
 }
