@@ -39,14 +39,13 @@ public class CheckVoiceActivityForChannelEventHandler : IRequestHandler<CheckVoi
 
         Guild guild = _discordClient.Cache.Guilds[_rootConfig.Discord.MainDiscordServerId];
 
-        IGuildChannel guildChannel = guild.Channels[request.ChannelId];
-
-        if (guildChannel is null)
+        if (!guild.Channels.TryGetValue(request.ChannelId, out IGuildChannel? guildChannel))
         {
             _logger.LogWarning("Could not find channel with id {ChannelId}", request.ChannelId);
 
             return;
         }
+
 
         List<VoiceState> users;
         if (guildChannel is VoiceGuildChannel stageChannel)
