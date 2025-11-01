@@ -1,9 +1,5 @@
 name: Build and Push Docker Image
 
-stages:
-  - update-version
-  - create-release
-
 on:
   push:
     branches:
@@ -16,43 +12,46 @@ env:
 permissions:
   contents: read      # to checkout the code
   packages: write     # to push Docker images to GitHub Packages (ghcr.io)
-
   
-jobs:
-  create-release-push:
-    runs-on: windows-latest
-    stage: update-version
-    allow_failure: true
+stages:
+  - update-version
+  - create-release
+  
+  
+update-version-and-push:
+  runs-on: windows-latest
+  stage: update-version
+  allow_failure: true
+  
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore Dotnet Tool
+      run: dotnet tool restore
+
+    - name: Update Release
+      run: dotnet tool run dotnet-version increment-version-with-git-hints -g "." -b "main"
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
-
-      - name: Restore Dotnet Tool
-        run: dotnet tool restore
-
-      - name: Update Release
-        run: dotnet tool run dotnet-version increment-version-with-git-hints -g "." -b "main"
-      
-      # to push the commit created
-      - run: git push
-        if: always()
-      # to push the tags created
-      - run: git push --tags
-        if: always()
-        
-  build-and-push:
-    runs-on: ubuntu-latest
-    stage: update-version
-
-    steps:
+    # to push the commit created
+    - run: git push
+      if: always()
+    # to push the tags created
+    - run: git push --tags
+      if: always()
+  
+build-and-push:
+  runs-on: ubuntu-latest
+  stage: create-release
+  
+  steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -82,7 +81,7 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.PUSH_TOKEN }}
-        
+
     - name: Set Docker tag
       id: get-tag
       run: |
@@ -93,7 +92,7 @@ jobs:
         elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
           echo "tag=unstable" >> $GITHUB_OUTPUT
         fi
-        
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
