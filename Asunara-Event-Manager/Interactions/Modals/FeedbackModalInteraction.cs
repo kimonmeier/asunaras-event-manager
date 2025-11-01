@@ -10,9 +10,9 @@ public class FeedbackModalInteraction(ISender sender) : ComponentInteractionModu
     [ComponentInteraction(Konst.Modal.Feedback.Id)]
     public async Task CreateFeedback(ulong eventId)
     {
-        var goodInput = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.GoodInputId).Value;
-        var criticInput = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.CriticInputId).Value;
-        var suggestionInput = Context.Components.OfType<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.SuggestionInputId).Value;
+        var goodInput = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.GoodInputId).Value;
+        var criticInput = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.CriticInputId).Value;
+        var suggestionInput = Context.Components.OfType<Label>().Select(x => x.Component).Cast<TextInput>().Single(x => x.CustomId == Konst.Modal.Feedback.SuggestionInputId).Value;
 
         await sender.Send(new EventExtendedFeedbackEvent()
         {
