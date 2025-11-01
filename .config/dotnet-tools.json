@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "versioning.net": {
+      "version": "0.7.5",
+      "commands": [
+        "dotnet-version"
+      ],
+      "rollForward": false
+    },
+    "dotnet-ef": {
+      "version": "9.0.10",
+      "commands": [
+        "dotnet-ef"
+      ],
+      "rollForward": false
+    }
+  }
+}
