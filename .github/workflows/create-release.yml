@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 permissions:
-  contents: read      # to checkout the code
+  contents: write      # to checkout the code
   packages: write     # to push Docker images to GitHub Packages (ghcr.io)
 
   
@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
