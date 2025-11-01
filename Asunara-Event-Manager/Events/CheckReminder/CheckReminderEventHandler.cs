@@ -36,6 +36,12 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
         
         foreach (var discordEvent in allUncompleted)
         {
+            if (!_discordClient.Cache.Guilds.ContainsKey(_config.Discord.MainDiscordServerId))
+            {
+                _logger.LogWarning("No guilds found, the bot is not ready yet");
+                return;
+            }
+            
             Guild socketGuild = _discordClient.Cache.Guilds[_config.Discord.MainDiscordServerId];
             GuildScheduledEvent guildEvent = socketGuild.ScheduledEvents[discordEvent.DiscordId];
 
