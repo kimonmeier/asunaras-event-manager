@@ -27,12 +27,13 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         var topMessages = await _activityEventRepository.GetTopMessagesSince(request.Since.ToDateTime(TimeOnly.MinValue));
         var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since.ToDateTime(TimeOnly.MinValue), request.IgnoreAfk);
 
+        // Remove all users that are on the team server
         if (request.IgnoreTeamMember)
         {
-            Guild socketGuild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
+            Guild teamGuild = _client.Cache.Guilds[_config.Discord.TeamDiscordServerId];
 
-            topMessages.RemoveAll(x => socketGuild.Users.ContainsKey(x.DiscordUserId));
-            topVoices.RemoveAll(x => socketGuild.Users.ContainsKey(x.DiscordUserId));
+            topMessages.RemoveAll(x => teamGuild.Users.ContainsKey(x.DiscordUserId));
+            topVoices.RemoveAll(x => teamGuild.Users.ContainsKey(x.DiscordUserId));
         }
 
         EmbedProperties builder = new EmbedProperties();
