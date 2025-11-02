@@ -70,11 +70,13 @@ public class AudioService(GatewayClient client, ILogger<AudioService> logger)
             
         }// ignored
         
+        var guildId = _voiceClient.GuildId;
+        
         _audioChannelId = null;
         _voiceClient.Dispose();
         _voiceClient = null;
 
-        await client.UpdateVoiceStateAsync(new VoiceStateProperties(_voiceClient.GuildId, null));
+        await client.UpdateVoiceStateAsync(new VoiceStateProperties(guildId, null));
     }
     
     public ulong? GetConnectedVoiceChannelId()
