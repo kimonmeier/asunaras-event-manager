@@ -68,6 +68,11 @@ public class OnUserVoiceStateUpdate(
 
     private async Task ProcessVoiceChannelKickOnBot(VoiceState? prevVoiceState, VoiceState currentVoiceState)
     {
+        if (!audioService.GetConnectedVoiceChannelId().HasValue)
+        {
+            return;
+        }
+        
         if (prevVoiceState?.ChannelId is null)
         {
             return;
