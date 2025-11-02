@@ -31,7 +31,7 @@ public class ActivityInteraction : ApplicationCommandModule<ApplicationCommandCo
             Context = Context,
             IgnoreAfk = ignoreAfk,
             IgnoreTeamMember = ignoreTeamMembers,
-            Since = since ?? DateOnly.MinValue,
+            Since = since ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-14)),
         });
     }
 
