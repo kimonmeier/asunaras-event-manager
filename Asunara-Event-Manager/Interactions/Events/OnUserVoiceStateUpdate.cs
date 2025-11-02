@@ -72,9 +72,9 @@ public class OnUserVoiceStateUpdate(
         {
             return;
         }
-
-        if (currentVoiceState.ChannelId is null ||
-            prevVoiceState.ChannelId != audioService.GetConnectedVoiceChannelId())
+        
+        if (currentVoiceState.ChannelId is null &&
+            currentVoiceState.ChannelId == audioService.GetConnectedVoiceChannelId())
         {
             return;
         }
