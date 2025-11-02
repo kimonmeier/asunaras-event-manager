@@ -4,6 +4,7 @@ using EventManager.Data.Repositories;
 using EventManager.Events.CheckVoiceActivityForChannel;
 using MediatR;
 using NetCord;
+using NetCord.Gateway;
 
 namespace EventManager.Events.CheckConnectedClients;
 
@@ -38,9 +39,17 @@ public class CheckConnectedClientsEventHandler : IRequestHandler<CheckConnectedC
     private async Task ProcessConnectedUser(GuildUser connectedUser, HashSet<ulong> channelIds, HashSet<ulong> wronglyConnectedUserIds, CancellationToken cancellationToken)
     {
         var activity = await _activityEventRepository.GetLastVoiceActivityByDiscordId(connectedUser.Id);
-        var voiceState = await connectedUser.GetVoiceStateAsync(cancellationToken: cancellationToken);
+        VoiceState? voiceState = null;
+        try
+        {
+            voiceState = await connectedUser.GetVoiceStateAsync(cancellationToken: cancellationToken);
+        }
+        catch (Exception)
+        {
+            return;
+        }
 
-        if (voiceState.ChannelId is null)
+        if (voiceState?.ChannelId is null)
         {
             return;
         }
