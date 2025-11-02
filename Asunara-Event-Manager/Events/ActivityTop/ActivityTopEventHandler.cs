@@ -47,14 +47,18 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         int index = 1;
         foreach (var topMessage in topMessages.Take(10))
         {
-            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guild.Users[topMessage.DiscordUserId].Username}", Value = $"{topMessage.Count} Nachrichten"});
+            GuildUser? guildUser = guild.Users.GetValueOrDefault(topMessage.DiscordUserId);
+
+            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topMessage.DiscordUserId}", Value = $"{topMessage.Count} Nachrichten"});
             index++;
         }
         builder.AddFields(new EmbedFieldProperties() { Name = "------------------------------------------", Value = "**Top Voice**" });
         index = 1;
         foreach (var topVoice in topVoices.Take(10))
         {
-            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guild.Users[topVoice.DiscordUserId].Username}", Value = $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden"});
+            GuildUser? guildUser = guild.Users.GetValueOrDefault(topVoice.DiscordUserId);
+            
+            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topVoice.DiscordUserId}", Value = $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden"});
             index++;
         }
 
