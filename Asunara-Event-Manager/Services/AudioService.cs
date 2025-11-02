@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 using NetCord.Gateway;
 using NetCord.Gateway.Voice;
 
 namespace EventManager.Services;
 
-public class AudioService(GatewayClient client)
+public class AudioService(GatewayClient client, ILogger<AudioService> logger)
 {
     private VoiceClient? _voiceClient;
     private ulong? _audioChannelId;
@@ -27,6 +28,12 @@ public class AudioService(GatewayClient client)
         if (_voiceClient.Status == WebSocketStatus.Disconnected)
         {
             await _voiceClient.StartAsync();
+        }
+
+        if (_voiceClient.Status == WebSocketStatus.Disconnected)
+        {
+            logger.LogWarning("Could not connect to voice channel");
+            return;
         }
 
         await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone));
