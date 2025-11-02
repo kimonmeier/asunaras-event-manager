@@ -43,9 +43,9 @@ public class ActivityUserEventHandler : IRequestHandler<ActivityUserEvent>
             .AddFields(new EmbedFieldProperties() { Name = "**7 Tage:**", Value = messageCountOneWeek.ToString() })
             .AddFields(new EmbedFieldProperties() { Name = "**14 Tage:**", Value = messageCountTwoWeeks.ToString() })
             .AddFields(new EmbedFieldProperties() { Name = "------------------------------------------", Value = "**Top Voice**" })
-            .AddFields(new EmbedFieldProperties() { Name = "**1 Tag**", Value = $"{TimeSpan.FromMilliseconds(voiceCountOneDay).TotalHours:F2} Stunden" })
-            .AddFields(new EmbedFieldProperties() { Name = "**7 Tage**", Value = $"{TimeSpan.FromMilliseconds(voiceCountOneWeek).TotalHours:F2} Stunden" })
-            .AddFields(new EmbedFieldProperties() { Name = "**14 Tage**", Value = $"{TimeSpan.FromMilliseconds(voiceCountTwoWeeks).TotalHours:F2} Stunden" });
+            .AddFields(new EmbedFieldProperties() { Name = "**1 Tag**", Value = $"{TimeSpan.FromSeconds(voiceCountOneDay).TotalHours:F2} Stunden" })
+            .AddFields(new EmbedFieldProperties() { Name = "**7 Tage**", Value = $"{TimeSpan.FromSeconds(voiceCountOneWeek).TotalHours:F2} Stunden" })
+            .AddFields(new EmbedFieldProperties() { Name = "**14 Tage**", Value = $"{TimeSpan.FromSeconds(voiceCountTwoWeeks).TotalHours:F2} Stunden" });
 
 
         await request.Context.Interaction.ModifyResponseAsync(x =>  x.AddEmbeds(builder), cancellationToken: cancellationToken);

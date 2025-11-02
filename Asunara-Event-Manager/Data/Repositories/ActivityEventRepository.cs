@@ -30,7 +30,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
             .CountAsync();
     }
 
-    public async Task<int> GetVoiceCountByDiscordId(ulong discordId, DateTime since, bool ignoreAfk)
+    public async Task<long> GetVoiceCountByDiscordId(ulong discordId, DateTime since, bool ignoreAfk)
     {
         await Task.CompletedTask;
 
@@ -163,7 +163,7 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
         var topResult = new ActivityTopResult()
         {
             DiscordUserId = currentActivity.DiscordUserId,
-            Count = (int)currentActivity.Date.Subtract(activityEvents.Last(x => x.Type == ActivityType.VoiceChannelJoined).Date).TotalMilliseconds
+            Count = (int)currentActivity.Date.Subtract(activityEvents.Last(x => x.Type == ActivityType.VoiceChannelJoined).Date).TotalSeconds
         };
 
         if (ignoreAfk)
@@ -177,14 +177,14 @@ public class ActivityEventRepository : GenericRepository<ActivityEvent>
 
                 if (lastAfkEvent is null)
                 {
-                    topResult.Count -= (int)currentActivity.Date.Subtract(firstAfkEvent.Date).TotalMilliseconds;
+                    topResult.Count -= (int)currentActivity.Date.Subtract(firstAfkEvent.Date).TotalSeconds;
 
                     break;
                 }
 
                 activityEvents.Remove(lastAfkEvent);
 
-                topResult.Count -= (int)lastAfkEvent.Date.Subtract(firstAfkEvent.Date).TotalMilliseconds;
+                topResult.Count -= (int)lastAfkEvent.Date.Subtract(firstAfkEvent.Date).TotalSeconds;
             }
         }
 

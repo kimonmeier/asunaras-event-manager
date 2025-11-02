@@ -58,7 +58,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         {
             GuildUser? guildUser = guild.Users.GetValueOrDefault(topVoice.DiscordUserId);
             
-            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topVoice.DiscordUserId}", Value = $"{TimeSpan.FromMilliseconds(topVoice.Count).TotalHours:F2} Stunden"});
+            builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topVoice.DiscordUserId}", Value = $"{TimeSpan.FromSeconds(topVoice.Count).TotalHours:F2} Stunden"});
             index++;
         }
 
