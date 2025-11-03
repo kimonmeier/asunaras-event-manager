@@ -104,6 +104,10 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
         foreach (var message in messages)
         {
+            if (message.Id == _config.Discord.Birthday.AnnouncementMessageId)
+            {
+                continue;
+            }
             await message.DeleteAsync();
         }
     }
