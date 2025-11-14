@@ -19,7 +19,8 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
     private readonly DbTransactionFactory _dbTransactionFactory;
     private readonly ILogger<CheckBirthdayEventHandler> _logger;
 
-    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, GatewayClient discordClient, RootConfig config,
+    public CheckBirthdayEventHandler(UserBirthdayRepository userBirthdayRepository, GatewayClient discordClient,
+        RootConfig config,
         DbTransactionFactory dbTransactionFactory, ILogger<CheckBirthdayEventHandler> logger)
     {
         _userBirthdayRepository = userBirthdayRepository;
@@ -40,14 +41,15 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
         var currentBirthdays = await _userBirthdayRepository.GetCurrentBirthday(DateTime.Now.Month, DateTime.Now.Day);
 
+        await CheckBirthdaysAndExistingUser(guild, currentBirthdays, cancellationToken);
+
         if (currentBirthdays.Count == 0)
         {
-            await birthdayChannel.SendMessageAsync("Leider gibt es heute keine Geburtstage!", cancellationToken: cancellationToken);
+            await birthdayChannel.SendMessageAsync("Leider gibt es heute keine Geburtstage!",
+                cancellationToken: cancellationToken);
 
             return;
         }
-
-        await CheckBirthdaysAndExistingUser(guild, currentBirthdays, cancellationToken);
 
         var birthdayMessages = _config.Discord.Birthday.Messages;
         var messageIndex = Random.Shared.Next(0, birthdayMessages.Length - 1);
@@ -83,10 +85,12 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
         await birthdayChannel.SendMessageAsync(builder.ToString(), cancellationToken: cancellationToken);
 
-        await guild.GetTextChannel(_config.Discord.HauptchatChannelId).SendMessageAsync(builder.ToString(), cancellationToken: cancellationToken);
+        await guild.GetTextChannel(_config.Discord.HauptchatChannelId)
+            .SendMessageAsync(builder.ToString(), cancellationToken: cancellationToken);
         if (hasComfort)
         {
-            await guild.GetTextChannel(_config.Discord.Comfort.ChannelId).SendMessageAsync(comfortBuilder.ToString(), cancellationToken: cancellationToken);
+            await guild.GetTextChannel(_config.Discord.Comfort.ChannelId)
+                .SendMessageAsync(comfortBuilder.ToString(), cancellationToken: cancellationToken);
         }
     }
 
@@ -100,7 +104,7 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
     private async Task ClearBirthdayChannel(TextChannel birthdayChannel)
     {
-        var messages = await birthdayChannel.GetMessagesAroundAsync( _config.Discord.Birthday.AnnouncementMessageId);
+        var messages = await birthdayChannel.GetMessagesAroundAsync(_config.Discord.Birthday.AnnouncementMessageId);
 
         foreach (var message in messages)
         {
@@ -108,31 +112,33 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
             {
                 continue;
             }
+
             await message.DeleteAsync();
         }
     }
-    
-    private async Task CheckBirthdaysAndExistingUser(Guild guild, List<UserBirthday> birthdays, CancellationToken cancellationToken)
+
+    private async Task CheckBirthdaysAndExistingUser(Guild guild, List<UserBirthday> birthdays,
+        CancellationToken cancellationToken)
     {
         Role birthdayRole = guild.Roles[_config.Discord.Birthday.BirthdayChildRoleId];
 
         for (int i = 0; i < birthdays.Count; i++)
         {
             var birthday = birthdays[i];
-            
+
             GuildUser? socketGuildUser = guild.Users.GetValueOrDefault(birthday.DiscordId);
 
             if (socketGuildUser is not null)
             {
                 await socketGuildUser.AddRoleAsync(birthdayRole.Id, cancellationToken: cancellationToken);
-                
+
                 continue;
             }
-            
+
             using var transaction = await _dbTransactionFactory.CreateTransaction();
             await _userBirthdayRepository.DeleteByDiscordAsync(birthday.DiscordId);
             await transaction.Commit(cancellationToken);
-                
+
             birthdays.RemoveAt(i);
             i--;
         }
