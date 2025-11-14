@@ -43,7 +43,7 @@
       <PackageReference Include="Sentry" Version="5.16.2" />
       <PackageReference Include="Sentry.DiagnosticSource" Version="5.16.2" />
       <PackageReference Include="Sentry.Extensions.Logging" Version="5.16.1" />
-      <PackageReference Include="Sentry.Profiling" Version="5.16.1" />
+      <PackageReference Include="Sentry.Profiling" Version="5.16.2" />
       <PackageReference Include="ThreadSafeDbContext" Version="8.0.1" />
     </ItemGroup>
 
