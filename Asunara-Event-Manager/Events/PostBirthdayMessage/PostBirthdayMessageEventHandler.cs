@@ -35,7 +35,7 @@ public class PostBirthdayMessageEventHandler : IRequestHandler<PostBirthdayMessa
             })
             .AddFields(new EmbedFieldProperties()
             {
-                Name = _rootConfig.Discord.Emote.Yes.GetDiscordString(),
+                Name = _rootConfig.Discord.Emote.No.GetDiscordString(),
                 Value = "Hiermit kannst du deinen Geburtstag löschen"
             })
             .WithColor(new Color(0, 100, 255));
