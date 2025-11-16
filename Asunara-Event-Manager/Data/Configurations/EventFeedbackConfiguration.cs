@@ -22,7 +22,7 @@ public class EventFeedbackConfiguration : IEntityTypeConfiguration<EventFeedback
             .HasOne(x => x.DiscordEvent)
             .WithMany()
             .HasForeignKey(x => x.DiscordEventId);
-
+        
         builder
             .HasIndex([nameof(EventFeedback.DiscordEventId), nameof(EventFeedback.UserId)])
             .IsUnique();

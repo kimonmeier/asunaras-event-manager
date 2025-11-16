@@ -29,6 +29,16 @@ public class EventSendFeedbackStarEventHandler : IRequestHandler<EventSendFeedba
         {
             throw new Exception("Event not found");
         }
+
+        if (request.StarCount > 5)
+        {
+            request.StarCount = 5;
+        }
+
+        if (request.StarCount < 0)
+        {
+            request.StarCount = 0;
+        }
         
         var transaction = await _dbTransactionFactory.CreateTransaction();;
 

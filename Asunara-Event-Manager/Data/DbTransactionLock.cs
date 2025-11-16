@@ -18,7 +18,7 @@ public class DbTransactionLock
     {
         _logger.LogDebug($"Trying to acquire lock from {Thread.CurrentThread.ManagedThreadId}");
 
-        var task = _semaphore.WaitAsync(1000);
+        var task = _semaphore.WaitAsync(2500);
 
         var count = 0;
         do
@@ -50,6 +50,8 @@ public class DbTransactionLock
             await Task.Delay(100);
         } while (!task.IsCompleted);
 
+        await Task.Delay(100);
+        
         _currentSemaphoreOwner = Guid.NewGuid();
 
         _logger.LogDebug($"Acquired lock from {Thread.CurrentThread.ManagedThreadId} with owner: {_currentSemaphoreOwner}");

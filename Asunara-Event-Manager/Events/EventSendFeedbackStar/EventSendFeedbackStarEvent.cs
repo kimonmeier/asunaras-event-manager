@@ -8,5 +8,5 @@ public class EventSendFeedbackStarEvent : IRequest
     
     public required ulong DiscordUserId { get; init; }
     
-    public required int StarCount { get; init; }
+    public required int StarCount { get; set; }
 }
