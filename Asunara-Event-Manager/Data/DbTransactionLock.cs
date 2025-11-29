@@ -18,39 +18,42 @@ public class DbTransactionLock
     {
         _logger.LogDebug($"Trying to acquire lock from {Thread.CurrentThread.ManagedThreadId}");
 
-        var task = _semaphore.WaitAsync(2500);
+        var task = _semaphore.WaitAsync(5000);
 
         var count = 0;
         do
         {
             switch (count)
             {
-                case 10:
+                case 1:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 100ms");
 
-                    break;
-                case 25:
-                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 250ms");
+                    continue;
+                case 3:
+                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 300ms");
 
-                    break;
+                    continue;
 
-                case 100:
+                case 10:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 1s");
 
-                    break;
+                    continue;
 
 
-                case 500:
+                case 50:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 5s");
 
-                    break;
+                    continue;
             }
 
             count++;
             await Task.Delay(100);
         } while (!task.IsCompleted);
 
-        await Task.Delay(100);
+        if (task.Exception != null)
+        {
+            throw task.Exception;
+        }
         
         _currentSemaphoreOwner = Guid.NewGuid();
 
