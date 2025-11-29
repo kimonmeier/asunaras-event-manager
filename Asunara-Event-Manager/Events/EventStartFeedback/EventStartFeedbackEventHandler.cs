@@ -117,14 +117,16 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
 
     private async Task StartFeedbackLoopUser(DiscordEvent discordEvent, ulong userId)
     {
-        DMChannel dmChannel = await _client.Cache.Guilds[_config.Discord.MainDiscordServerId].Users[userId]
-            .GetDMChannelAsync();
+        Guild guild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
 
-        if (dmChannel is null)
+        if (!guild.Users.ContainsKey(userId))
         {
-            _logger.LogError("Could not find DMChannel for user {UserId}", userId);
+            _logger.LogWarning("The user {UserId} is no longer a guild user", userId);
             return;
         }
+        
+        DMChannel dmChannel = await guild.Users[userId]
+            .GetDMChannelAsync();
 
         MessageProperties messageProperties = new();
         messageProperties.Content =
