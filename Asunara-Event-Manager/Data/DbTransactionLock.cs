@@ -18,35 +18,49 @@ public class DbTransactionLock
     {
         _logger.LogDebug($"Trying to acquire lock from {Thread.CurrentThread.ManagedThreadId}");
 
-        var task = _semaphore.WaitAsync(5000);
+        var task = _semaphore.WaitAsync(10000);
 
         var count = 0;
         do
         {
+            count++;
+
             switch (count)
             {
                 case 1:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 100ms");
 
                     continue;
-                case 3:
-                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 300ms");
+                case 5:
+                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 500ms");
 
                     continue;
-
                 case 10:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 1s");
 
                     continue;
 
+                case 25:
+                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 2.5s");
 
+                    continue;
+                
                 case 50:
                     _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 5s");
 
                     continue;
+                
+                case 75:
+                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 7.5s");
+
+                    continue;
+                
+                case 99:
+                    _logger.LogWarning($"Could not acquire lock for {Thread.CurrentThread.ManagedThreadId}, waiting for 9.9s");
+
+                    continue;
             }
 
-            count++;
             await Task.Delay(100);
         } while (!task.IsCompleted);
 
@@ -54,7 +68,7 @@ public class DbTransactionLock
         {
             throw task.Exception;
         }
-        
+
         _currentSemaphoreOwner = Guid.NewGuid();
 
         _logger.LogDebug($"Acquired lock from {Thread.CurrentThread.ManagedThreadId} with owner: {_currentSemaphoreOwner}");
