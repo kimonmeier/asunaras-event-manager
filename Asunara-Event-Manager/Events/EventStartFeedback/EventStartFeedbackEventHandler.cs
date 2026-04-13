@@ -60,10 +60,6 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
             {
                 foreach (var eventUser in users)
                 {
-                    // Remove Participant Role
-                    await guild.RemoveUserRoleAsync(eventUser.User.Id, _config.Discord.Event.EventParticipantRoleId,
-                        cancellationToken: cancellationToken);
-
                     if (!_eventParticipantService.HasParticipant(request.Event.Id, eventUser.User.Id))
                     {
                         _logger.LogInformation(
