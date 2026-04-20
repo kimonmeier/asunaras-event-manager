@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="EFCoreSecondLevelCacheInterceptor" Version="5.3.3" />
+      <PackageReference Include="EFCoreSecondLevelCacheInterceptor" Version="5.3.4" />
       <PackageReference Include="EFCoreSecondLevelCacheInterceptor.MemoryCache" Version="5.3.3" />
       <PackageReference Include="FluentValidation" Version="12.1.0" />
       <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.0" />
