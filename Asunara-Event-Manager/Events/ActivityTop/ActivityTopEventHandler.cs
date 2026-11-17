@@ -1,5 +1,6 @@
 ﻿using EventManager.Configuration;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
 using NetCord;
 using NetCord.Gateway;
@@ -27,13 +28,21 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         var topMessages = await _activityEventRepository.GetTopMessagesSince(request.Since.ToDateTime(TimeOnly.MinValue));
         var topVoices = await _activityEventRepository.GetTopVoiceSince(request.Since.ToDateTime(TimeOnly.MinValue), request.IgnoreAfk);
 
-        // Remove all users that are on the team server
+        // Remove all users that are on the team server.
+        // The member list is loaded through REST, the gateway cache never contains every member
+        // and a cache miss would keep a team member in the ranking.
         if (request.IgnoreTeamMember)
         {
-            Guild teamGuild = _client.Cache.Guilds[_config.Discord.TeamDiscordServerId];
+            HashSet<ulong> teamMemberIds = new HashSet<ulong>();
 
-            topMessages.RemoveAll(x => teamGuild.Users.ContainsKey(x.DiscordUserId));
-            topVoices.RemoveAll(x => teamGuild.Users.ContainsKey(x.DiscordUserId));
+            await foreach (GuildUser teamMember in _client.Rest.GetGuildUsersAsync(_config.Discord.TeamDiscordServerId)
+                               .WithCancellation(cancellationToken))
+            {
+                teamMemberIds.Add(teamMember.Id);
+            }
+
+            topMessages.RemoveAll(x => teamMemberIds.Contains(x.DiscordUserId));
+            topVoices.RemoveAll(x => teamMemberIds.Contains(x.DiscordUserId));
         }
 
         EmbedProperties builder = new EmbedProperties();
@@ -48,7 +57,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         int index = 1;
         foreach (var topMessage in topMessages.Take(10))
         {
-            GuildUser? guildUser = guild.Users.GetValueOrDefault(topMessage.DiscordUserId);
+            GuildUser? guildUser = await guild.GetOrFetchUserAsync(topMessage.DiscordUserId, cancellationToken);
 
             builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topMessage.DiscordUserId}", Value = $"{topMessage.Count} Nachrichten"});
             index++;
@@ -57,7 +66,7 @@ public class ActivityTopEventHandler : IRequestHandler<ActivityTopEvent>
         index = 1;
         foreach (var topVoice in topVoices.Take(10))
         {
-            GuildUser? guildUser = guild.Users.GetValueOrDefault(topVoice.DiscordUserId);
+            GuildUser? guildUser = await guild.GetOrFetchUserAsync(topVoice.DiscordUserId, cancellationToken);
             
             builder.AddFields(new EmbedFieldProperties() { Name = $"**Top {index}** - {guildUser?.Username ?? "ID: " + topVoice.DiscordUserId}", Value = $"{TimeSpan.FromSeconds(topVoice.Count).TotalHours:F2} Stunden"});
             index++;

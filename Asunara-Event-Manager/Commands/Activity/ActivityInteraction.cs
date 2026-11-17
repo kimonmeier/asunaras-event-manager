@@ -64,9 +64,19 @@ public class ActivityInteraction : ApplicationCommandModule<ApplicationCommandCo
     {
         await this.Deferred();
 
+        // In a guild interaction the invoking user is delivered as a guild user, the lookup is only a fallback
+        GuildUser? user = Context.User as GuildUser
+                          ?? await Context.Guild!.GetOrFetchUserAsync(Context.User.Id);
+
+        if (user is null)
+        {
+            await Context.Interaction.ModifyResponseAsync(x => x.WithContent("Du konntest auf dem Server nicht gefunden werden."));
+            return;
+        }
+
         await _sender.Send(new ActivityUserEvent()
         {
-            Context = Context, User = Context.Guild!.Users[Context.User.Id], Since = since, IgnoreAfk = ignoreAfk
+            Context = Context, User = user, Since = since, IgnoreAfk = ignoreAfk
         });
     }
 }

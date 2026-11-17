@@ -3,6 +3,7 @@ using EventManager.Data.Entities.Events;
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.UpdateEventFeedbackThread;
+using EventManager.Extensions;
 using EventManager.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -115,14 +116,15 @@ public class EventStartFeedbackEventHandler : IRequestHandler<EventStartFeedback
     {
         Guild guild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
 
-        if (!guild.Users.ContainsKey(userId))
+        GuildUser? guildUser = await guild.GetOrFetchUserAsync(userId);
+
+        if (guildUser is null)
         {
             _logger.LogWarning("The user {UserId} is no longer a guild user", userId);
             return;
         }
         
-        DMChannel dmChannel = await guild.Users[userId]
-            .GetDMChannelAsync();
+        DMChannel dmChannel = await guildUser.GetDMChannelAsync();
 
         MessageProperties messageProperties = new();
         messageProperties.Content =

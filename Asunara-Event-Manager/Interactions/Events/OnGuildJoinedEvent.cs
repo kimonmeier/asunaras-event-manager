@@ -1,8 +1,10 @@
-using EventManager.Configuration;
+﻿using EventManager.Configuration;
 using EventManager.Events.CheckConnectedClients;
+using EventManager.Extensions;
 using EventManager.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
 
@@ -35,8 +37,23 @@ public class OnGuildJoinedEvent(
         {
             voiceStateHistoryService.AddLastVoiceState(guildVoiceState.Value);
         }
+        
+        List<GuildUser> connectedClients = new List<GuildUser>();
+        foreach (var guildVoiceState in guild.VoiceStates.Values)
+        {
+            GuildUser? connectedUser = guildVoiceState.User
+                                       ?? await guild.GetOrFetchUserAsync(guildVoiceState.UserId);
 
-        var connectedClients = guild.VoiceStates.Keys.Select(x => guild.Users[x]).ToList();
+            if (connectedUser is null)
+            {
+                logger.LogWarning("User {UserId} is connected to a voice channel but no longer a member of the guild {GuildId}",
+                    guildVoiceState.UserId, guild.Id);
+                continue;
+            }
+
+            connectedClients.Add(connectedUser);
+        }
+
         await sender.Send(new CheckConnectedClientsEvent()
         {
             ConnectedUsers = connectedClients
@@ -61,7 +78,14 @@ public class OnGuildJoinedEvent(
 
         try
         {
-            var dmChannelAsync = await guild.Users[guild.OwnerId].GetDMChannelAsync();
+            GuildUser? owner = await guild.GetOrFetchUserAsync(guild.OwnerId);
+
+            if (owner is null)
+            {
+                throw new InvalidOperationException($"The owner {guild.OwnerId} is not a member of the guild {guild.Id}");
+            }
+
+            var dmChannelAsync = await owner.GetDMChannelAsync();
             await dmChannelAsync.SendMessageAsync(
                 $"Sorry aber ich bin ein Teambot für den Midnight-Café Discord und kann deswegen nicht joinen!");
         }

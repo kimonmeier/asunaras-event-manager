@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using EventManager.Configuration;
 using EventManager.Data;
 using EventManager.Data.Entities.Birthday;
@@ -8,6 +9,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NetCord;
 using NetCord.Gateway;
+using NetCord.Rest;
 
 namespace EventManager.Events.CheckBirthday;
 
@@ -37,11 +39,11 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         var birthdayChannel = guild.GetTextChannel(_config.Discord.Birthday.ChannelId);
 
         await ClearBirthdayChannel(birthdayChannel);
-        await RemoveBirthdayRoleOnOldUsers(birthdayRole);
+        await RemoveBirthdayRoleOnOldUsers(birthdayRole, cancellationToken);
 
         var currentBirthdays = await _userBirthdayRepository.GetCurrentBirthday(DateTime.Now.Month, DateTime.Now.Day);
 
-        await CheckBirthdaysAndExistingUser(guild, currentBirthdays, cancellationToken);
+        var birthdayUsers = await CheckBirthdaysAndExistingUser(guild, currentBirthdays, cancellationToken);
 
         if (currentBirthdays.Count == 0)
         {
@@ -68,7 +70,7 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
                 : $"{birthday.Birthday.GetAge()} Jahre alt";
             var line = $"- <@{birthday.DiscordId}> - {ageString}";
 
-            GuildUser guildUser = guild.Users[birthday.DiscordId];
+            GuildUser guildUser = birthdayUsers[birthday.DiscordId];
 
             if (guildUser.RoleIds.Any(x => x == _config.Discord.Comfort.ComfortRoleId))
             {
@@ -94,11 +96,23 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         }
     }
 
-    private async Task RemoveBirthdayRoleOnOldUsers(Role birthdayRole)
+    private async Task RemoveBirthdayRoleOnOldUsers(Role birthdayRole, CancellationToken cancellationToken)
     {
-        foreach (GuildUser roleMember in birthdayRole.GetUser(_discordClient))
+        IList<GuildUser> roleMembers = await birthdayRole.GetUsersAsync(_discordClient, cancellationToken);
+
+        _logger.LogInformation("Found {Count} user(s) with the birthday role {RoleId}", roleMembers.Count,
+            birthdayRole.Id);
+
+        foreach (GuildUser roleMember in roleMembers)
         {
-            await roleMember.RemoveRoleAsync(birthdayRole.Id);
+            try
+            {
+                await roleMember.RemoveRoleAsync(birthdayRole.Id, cancellationToken: cancellationToken);
+            }
+            catch (RestException exception)
+            {
+                _logger.LogError(exception, "Could not remove the birthday role from user {UserId}", roleMember.Id);
+            }
         }
     }
 
@@ -117,23 +131,30 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
         }
     }
 
-    private async Task CheckBirthdaysAndExistingUser(Guild guild, List<UserBirthday> birthdays,
+    private async Task<Dictionary<ulong, GuildUser>> CheckBirthdaysAndExistingUser(Guild guild,
+        List<UserBirthday> birthdays,
         CancellationToken cancellationToken)
     {
         Role birthdayRole = guild.Roles[_config.Discord.Birthday.BirthdayChildRoleId];
+        Dictionary<ulong, GuildUser> birthdayUsers = new Dictionary<ulong, GuildUser>();
 
         for (int i = 0; i < birthdays.Count; i++)
         {
             var birthday = birthdays[i];
 
-            GuildUser? socketGuildUser = guild.Users.GetValueOrDefault(birthday.DiscordId);
+            GuildUser? guildUser = await GetGuildUser(guild, birthday.DiscordId, cancellationToken);
 
-            if (socketGuildUser is not null)
+            if (guildUser is not null)
             {
-                await socketGuildUser.AddRoleAsync(birthdayRole.Id, cancellationToken: cancellationToken);
+                birthdayUsers[birthday.DiscordId] = guildUser;
+
+                await guildUser.AddRoleAsync(birthdayRole.Id, cancellationToken: cancellationToken);
 
                 continue;
             }
+
+            _logger.LogWarning("User {UserId} is no longer a member of the guild, removing the birthday entry",
+                birthday.DiscordId);
 
             using var transaction = await _dbTransactionFactory.CreateTransaction();
             await _userBirthdayRepository.DeleteByDiscordAsync(birthday.DiscordId);
@@ -141,6 +162,30 @@ public class CheckBirthdayEventHandler : IRequestHandler<CheckBirthdayEvent>
 
             birthdays.RemoveAt(i);
             i--;
+        }
+
+        return birthdayUsers;
+    }
+
+    /// <summary>
+    /// Resolves a guild user. The gateway cache only holds a part of the guild members,
+    /// so a cache miss is resolved through the REST api and only a 404 means the user really left.
+    /// </summary>
+    private async Task<GuildUser?> GetGuildUser(Guild guild, ulong userId, CancellationToken cancellationToken)
+    {
+        if (guild.Users.TryGetValue(userId, out GuildUser? cachedUser))
+        {
+            return cachedUser;
+        }
+
+        try
+        {
+            return await _discordClient.Rest.GetGuildUserAsync(guild.Id, userId,
+                cancellationToken: cancellationToken);
+        }
+        catch (RestException exception) when (exception.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
         }
     }
 }

@@ -39,8 +39,8 @@ public class PlayHalloweenScareEventHandler : IRequestHandler<PlayHalloweenScare
             return;
         }
 
-        var userIds = _client.Cache.Guilds[_config.Discord.MainDiscordServerId]
-            .GetConnectedUsers(connectedChannelId.Value)
+        var userIds = (await _client.Cache.Guilds[_config.Discord.MainDiscordServerId]
+                .GetConnectedUsersAsync(connectedChannelId.Value, cancellationToken))
             .Select(x => x.Id)
             .ToArray();
         _halloweenService.Scared(connectedChannelId.Value, userIds);

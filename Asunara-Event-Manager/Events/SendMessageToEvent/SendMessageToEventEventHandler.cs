@@ -2,6 +2,7 @@
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using MediatR;
 using NetCord;
 using NetCord.Gateway;
@@ -28,7 +29,8 @@ public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEvent
     {
         List<UserPreference> userPreferences = await _userPreferenceRepository.ListAllAsync();
         var cacheGuild = _client.Cache.Guilds[_config.Discord.MainDiscordServerId];
-        GuildUser guildUser = cacheGuild.Users[request.Author.Id];
+        GuildUser? guildUser = await cacheGuild.GetOrFetchUserAsync(request.Author.Id, cancellationToken);
+        ImageUrl? authorAvatarUrl = guildUser?.GetGuildAvatarUrl(ImageFormat.Png) ?? request.Author.GetAvatarUrl(ImageFormat.Png);
 
         DiscordEvent? discordEvent = await _discordEventRepository.FindByEntityAsync(request.DiscordEventId);
         if (discordEvent is null)
@@ -40,7 +42,7 @@ public class SendMessageToEventEventHandler : IRequestHandler<SendMessageToEvent
 
         EmbedProperties embed = new EmbedProperties();        
         embed.WithTitle("Private Nachricht");
-        embed.WithAuthor(new EmbedAuthorProperties().WithName(guildUser.GlobalName).WithIconUrl(guildUser.GetGuildAvatarUrl(ImageFormat.Png)!.ToString(512)));
+        embed.WithAuthor(new EmbedAuthorProperties().WithName(request.Author.GlobalName).WithIconUrl(authorAvatarUrl?.ToString(512)));
         embed.WithDescription(request.Message);
         embed.WithColor(new Color(0, 0, 255));
 

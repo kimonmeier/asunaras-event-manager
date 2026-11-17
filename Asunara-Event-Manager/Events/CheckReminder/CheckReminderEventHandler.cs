@@ -2,6 +2,7 @@
 using EventManager.Data.Entities.Events;
 using EventManager.Data.Entities.Notifications;
 using EventManager.Data.Repositories;
+using EventManager.Extensions;
 using EventManager.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -99,6 +100,14 @@ public class CheckReminderEventHandler : IRequestHandler<CheckReminderEvent>
             return;
         }
         
-        await dmChannel.SendMessageAsync($"Hallöchen {socketGuild.Users[user.User.Id].Nickname} <:MilkAndMocha_Heart:1368600961693651154>,\n\n Du hast dich für das Event **{guildEvent.Name}** angemeldet! Dieses findet **heute** um **{discordEvent.Date.FromUtc().ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/cafemidnight?event={discordEvent.DiscordId} ||");
+        GuildUser? guildUser = await socketGuild.GetOrFetchUserAsync(user.User.Id);
+
+        if (guildUser is null)
+        {
+            _logger.LogWarning("User {UserId} is no longer a member of the guild, skipping the reminder for event {DiscordEventName}:{DiscordEventId}", user.User.Id, discordEvent.Name, discordEvent.DiscordId);
+            return;
+        }
+
+        await dmChannel.SendMessageAsync($"Hallöchen {guildUser.Nickname} <:MilkAndMocha_Heart:1368600961693651154>,\n\n Du hast dich für das Event **{guildEvent.Name}** angemeldet! Dieses findet **heute** um **{discordEvent.Date.FromUtc().ToShortTimeString()} Uhr** statt!\n\nSei dabei und joine dem Channel, oder melde dich ab in dem du dich nicht mehr für das Event interessierst!\n\n|| https://discord.gg/cafemidnight?event={discordEvent.DiscordId} ||");
     }
 }

@@ -2,6 +2,7 @@
 using EventManager.Data.Repositories;
 using EventManager.Events.CheckForUserPreferenceOnEventInterested;
 using EventManager.Events.CheckFskRestrictionOnUser;
+using EventManager.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NetCord;
@@ -46,7 +47,16 @@ public class MemberAddedEventEventHandler : IRequestHandler<MemberAddedEventEven
 
         }
 
-        GuildUser user = _client.Cache.Guilds[_config.Discord.MainDiscordServerId].Users[request.UserId];
+        GuildUser? user = await _client.Cache.Guilds[_config.Discord.MainDiscordServerId]
+            .GetOrFetchUserAsync(request.UserId, cancellationToken);
+
+        if (user is null)
+        {
+            _logger.LogWarning("User {UserId} is no longer a member of the guild, skipping the checks for event {DiscordEventId}",
+                request.UserId, request.EventId);
+
+            return;
+        }
 
         await _sender.Send(new CheckForUserPreferenceOnEventInterestedEvent()
         {
@@ -60,7 +70,7 @@ public class MemberAddedEventEventHandler : IRequestHandler<MemberAddedEventEven
 
         if (!checkResult.Success)
         {
-            DMChannel channelAsync = await guild.Users[request.UserId].GetDMChannelAsync(cancellationToken: cancellationToken);
+            DMChannel channelAsync = await user.GetDMChannelAsync(cancellationToken: cancellationToken);
             await channelAsync.SendMessageAsync(
                 $"Hallo\nLeider wurde beim Überprüfen deines Alters festgestellt, dass du nicht für dieses Event zugelassen bist, der Grund dafür ist: \"{checkResult.ErrorMessage}\"\nDu bist aber sehr gerne an einem anderen Event willkommen", cancellationToken: cancellationToken);
         }

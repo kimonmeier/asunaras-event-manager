@@ -46,6 +46,16 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
         eventFeedback.Good = request.Good;
         eventFeedback.Suggestion = request.Suggestion;
 
+        string creatorName = "Anonym!";
+
+        if (!eventFeedback.Anonymous)
+        {
+            GuildUser? creator = await _client.Cache.Guilds[_config.Discord.MainDiscordServerId]
+                .GetOrFetchUserAsync(request.DiscordUserId, cancellationToken);
+
+            creatorName = creator?.Nickname ?? creator?.GlobalName ?? creator?.Username
+                ?? $"Unbekannt ({request.DiscordUserId})";
+        }
 
         EmbedProperties feedbackEmbed = new EmbedProperties()
             .WithAuthor(new EmbedAuthorProperties() { Name = "Event-Manager" })
@@ -54,10 +64,7 @@ public class EventExtendedFeedbackEventHandler : IRequestHandler<EventExtendedFe
                 new EmbedFieldProperties()
                 {
                     Name = "Ersteller",
-                    Value = eventFeedback.Anonymous
-                        ? "Anonym!"
-                        : _client.Cache.Guilds[_config.Discord.MainDiscordServerId].Users[request.DiscordUserId]
-                            .Nickname
+                    Value = creatorName
                 },
                 new EmbedFieldProperties() { Name = "Sterne", Value = $"{eventFeedback.Score:F2} / 5 Sterne" },
                 new EmbedFieldProperties()

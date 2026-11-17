@@ -1,9 +1,11 @@
-using EventManager.Events.CheckVoiceActivityForChannel;
+﻿using EventManager.Events.CheckVoiceActivityForChannel;
 using EventManager.Events.MemberJoinedChannel;
 using EventManager.Events.MemberLeftChannel;
 using EventManager.Extensions;
 using EventManager.Services;
 using MediatR;
+using Microsoft.Extensions.Logging;
+using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
 
@@ -13,14 +15,23 @@ public class OnUserVoiceStateUpdate(
     ISender sender,
     AudioService audioService,
     VoiceStateHistoryService voiceStateHistoryService,
-    GatewayClient client) : IVoiceStateUpdateGatewayHandler
+    GatewayClient client,
+    ILogger<OnUserVoiceStateUpdate> logger) : IVoiceStateUpdateGatewayHandler
 {
     public async ValueTask HandleAsync(VoiceState currentVoiceState)
     {
         var prevVoiceState = voiceStateHistoryService.GetLastVoiceState(currentVoiceState.UserId);
         voiceStateHistoryService.AddLastVoiceState(currentVoiceState);
         var guild = client.Cache.Guilds[currentVoiceState.GuildId];
-        var currentUser = guild.Users[currentVoiceState.UserId];
+        GuildUser? currentUser = currentVoiceState.User
+                                 ?? await guild.GetOrFetchUserAsync(currentVoiceState.UserId);
+
+        if (currentUser is null)
+        {
+            logger.LogWarning("Voice state update for user {UserId} who is no longer a member of the guild {GuildId}",
+                currentVoiceState.UserId, currentVoiceState.GuildId);
+            return;
+        }
 
         if (currentUser.IsBot)
         {
